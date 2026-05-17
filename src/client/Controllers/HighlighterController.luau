@@ -21,7 +21,7 @@ function HighlighterController:_ApplyHighlights()
         local highlight = Instance.new("Highlight")
         highlight.FillColor = Color3.fromRGB(0, 120, 255)
         highlight.OutlineColor = Color3.fromRGB(0, 120, 255)
-        highlight.FillTransparency = 0
+        highlight.FillTransparency = 1
         highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         highlight.Name = "RunnerHighlight"
         highlight.Parent = runner
