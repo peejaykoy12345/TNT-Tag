@@ -83,6 +83,7 @@ function RoundService:_CleanupRound()
     end
 
     for _, char in ipairs(workspace.Runners:GetChildren()) do
+        self:_RemoveTaggerEffects(char)
         char:SetAttribute("Tagger", nil)
 
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -173,12 +174,16 @@ function RoundService:_KillTagger()
             humanoid.Health = 0
         end
 
+        self:_RemoveTaggerEffects(runner)
         runner:SetAttribute("Tagger", nil)
         break
     end
 end
 
 function RoundService:_OnRunnerDied(char: Model)
+    if not GameStarted.Value then return end
+
+    self:_RemoveTaggerEffects(char)
     char:SetAttribute("Tagger", nil)
     char.Parent = workspace
 
@@ -266,8 +271,18 @@ function RoundService:_StartIntermission()
     end
 end
 
+function RoundService:_SetupRunnersListener()
+    workspace.Runners.ChildRemoved:Connect(function()
+        if not GameStarted.Value then return end
+        task.defer(function()
+            self:_CheckRoundEnd()
+        end)
+    end)
+end
+
 function RoundService:Start()
     self:_SetupInitializeHandlers()
+    self:_SetupRunnersListener()
     self:_StartIntermission()
 end
 
