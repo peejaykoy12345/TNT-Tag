@@ -16,6 +16,8 @@ local CONFIG = {
     ROUND_TIME = 10,
     DISTANCE_NEEDED_TO_TAG = 10,
     TAG_COOLDOWN = 3,
+    TAGGER_WALKSPEED = 28,
+    RUNNER_WALKSPEED = 26,
 }
 
 local RoundService = {}
@@ -35,6 +37,20 @@ function RoundService:_RemoveTaggerEffects(tagger: Model)
     end
 end
 
+function RoundService:_ApplyTaggerStats(tagger: Model)
+    local hum = tagger:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    hum.WalkSpeed = CONFIG.TAGGER_WALKSPEED
+end
+
+function RoundService:_RemoveTaggerStats(tagger: Model)
+    local hum = tagger:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
+end
+
 function RoundService:_CleanupRound()
     if self.currentConnection then
         self.currentConnection:Disconnect()
@@ -43,8 +59,13 @@ function RoundService:_CleanupRound()
 
     for _, char in ipairs(workspace.Runners:GetChildren()) do
         char:SetAttribute("Tagger", nil)
-        char.Parent = workspace
 
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+        end
+
+        char.Parent = workspace
         char:PivotTo(MapMarkers.Spawn.CFrame)
     end
 
@@ -58,6 +79,7 @@ function RoundService:_CheckRoundEnd()
         self:Start()
         return true
     end
+
     return false
 end
 
@@ -81,6 +103,7 @@ function RoundService:_InitializeTagging(tagger: Model)
     end
 
     self:_ApplyTaggerEffects(tagger)
+    self:_ApplyTaggerStats(tagger)
 
     self.currentConnection = RunService.Heartbeat:Connect(function()
         local hrp = tagger:FindFirstChild("HumanoidRootPart") :: BasePart
@@ -99,6 +122,8 @@ function RoundService:_InitializeTagging(tagger: Model)
             self.lastTagTime = os.clock()
 
             self:_RemoveTaggerEffects(tagger)
+            self:_RemoveTaggerStats(tagger)
+
             tagger:SetAttribute("Tagger", nil)
             runner:SetAttribute("Tagger", true)
 
@@ -170,6 +195,8 @@ function RoundService:_StartRound()
         char.Parent = workspace.Runners
 
         local humanoid = char:FindFirstChildOfClass("Humanoid")
+        humanoid.WalkSpeed = CONFIG.RUNNER_WALKSPEED
+
         if humanoid then
             humanoid.Died:Once(function()
                 self:_OnRunnerDied(char)
