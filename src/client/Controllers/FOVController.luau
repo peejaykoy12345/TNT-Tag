@@ -3,7 +3,6 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local plr = Players.LocalPlayer
-local cam = workspace.CurrentCamera
 
 local CONFIG = {
     DEFAULT_FOV = 70,
@@ -11,9 +10,6 @@ local CONFIG = {
     TWEEN_IN_TIME = 0.3,
     TWEEN_OUT_TIME = 0.5,
 }
-
-local tweenIn = TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV})
-local tweenOut = TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV})
 
 local FOVController = {}
 
@@ -33,12 +29,10 @@ function FOVController:Init()
 
         if isMoving and isTagger and not isFOVActive then
             isFOVActive = true
-            tweenOut:Cancel()
-            tweenIn:Play()
+            TweenService:Create(workspace.CurrentCamera, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV}):Play()
         elseif (not isMoving or not isTagger) and isFOVActive then
             isFOVActive = false
-            tweenIn:Cancel()
-            tweenOut:Play()
+            TweenService:Create(workspace.CurrentCamera, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV}):Play()
         end
     end)
 end
