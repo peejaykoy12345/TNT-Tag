@@ -20,7 +20,7 @@ function TimerUIController:Init()
 
         if name ~= "Timer" then return end
 
-        local seconds = value.uint32
+        local seconds = value.uint16
         self:_ChangeTimerText(seconds)
     end)
 end

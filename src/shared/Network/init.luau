@@ -16,10 +16,12 @@ return {
                     })
                 }),
                 Update = ByteNetMax.definePacket({
+                    reliabilityType = "unreliable",
                     value = ByteNetMax.struct({
                         Name = ByteNetMax.string,
                         Value = ByteNetMax.struct({
                             string = ByteNetMax.optional(ByteNetMax.string),
+                            uint16 = ByteNetMax.optional(ByteNetMax.uint16),
                             uint32 = ByteNetMax.optional(ByteNetMax.uint32),
                             custom = ByteNetMax.optional(ByteNetMax.unknown),
                         }),
