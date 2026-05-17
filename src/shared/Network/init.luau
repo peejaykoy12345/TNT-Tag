@@ -7,6 +7,16 @@ return {
             queries = {},
         }
     end),
+    Ability = ByteNetMax.defineNamespace("General", function()
+        return {
+            packets = {
+                Perform = ByteNetMax.definePacket({
+                    value = ByteNetMax.struct({})
+                }),
+            },
+            queries = {},
+        }
+    end),
     Replication = ByteNetMax.defineNamespace("Replication", function()
         return {
             packets = {
