@@ -21,6 +21,7 @@ return {
                         Name = ByteNetMax.string,
                         Value = ByteNetMax.struct({
                             string = ByteNetMax.optional(ByteNetMax.string),
+                            uint8 = ByteNetMax.optional(ByteNetMax.uint8),
                             uint16 = ByteNetMax.optional(ByteNetMax.uint16),
                             uint32 = ByteNetMax.optional(ByteNetMax.uint32),
                             custom = ByteNetMax.optional(ByteNetMax.unknown),

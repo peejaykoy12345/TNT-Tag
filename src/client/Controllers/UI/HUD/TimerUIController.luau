@@ -1,5 +1,5 @@
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local Network = require(ReplicatedStorage.Modules.Network)
 local ReplicationPackets = Network.Replication.packets

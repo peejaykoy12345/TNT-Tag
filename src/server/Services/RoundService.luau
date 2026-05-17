@@ -9,6 +9,7 @@ local GameStarted: BoolValue = Values.GameStarted
 
 local Network = require(ReplicatedStorage.Modules.Network)
 local ReplicationPackets = Network.Replication.packets
+local InitializePacket = ReplicationPackets.Initialize
 local UpdatePacket = ReplicationPackets.Update
 
 local CONFIG = {
@@ -51,6 +52,30 @@ function RoundService:_RemoveTaggerStats(tagger: Model)
     hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
 end
 
+function RoundService:_SendRunnersLeft()
+    UpdatePacket.sendToAll({Name = "RunnersLeft", Value = {uint8 = #workspace.Runners:GetChildren() - 1}})
+end
+
+function RoundService:_SendTagger(tagger: Model)
+    UpdatePacket.sendToAll({Name = "Tagger", Value = {string = tagger.Name}})
+end
+
+function RoundService:_SetupInitializeHandlers()
+    InitializePacket.listen(function(data, plr)
+        local name = data.Name
+
+        if name == "RunnersLeft" then
+            UpdatePacket.sendTo({Name = "RunnersLeft", Value = {uint8 = #workspace.Runners:GetChildren() - 1}}, plr)
+        elseif name == "Tagger" then
+            for _, runner in ipairs(workspace.Runners:GetChildren()) do
+                if not runner:GetAttribute("Tagger") then continue end
+                UpdatePacket.sendTo({Name = "Tagger", Value = {string = runner.Name}}, plr)
+                break
+            end
+        end
+    end)
+end
+
 function RoundService:_CleanupRound()
     if self.currentConnection then
         self.currentConnection:Disconnect()
@@ -76,7 +101,7 @@ function RoundService:_CheckRoundEnd()
     local runners = workspace.Runners:GetChildren()
     if #runners <= 1 then
         self:_CleanupRound()
-        self:Start()
+        self:_StartIntermission()
         return true
     end
 
@@ -104,6 +129,7 @@ function RoundService:_InitializeTagging(tagger: Model)
 
     self:_ApplyTaggerEffects(tagger)
     self:_ApplyTaggerStats(tagger)
+    self:_SendTagger(tagger)
 
     self.currentConnection = RunService.Heartbeat:Connect(function()
         local hrp = tagger:FindFirstChild("HumanoidRootPart") :: BasePart
@@ -155,6 +181,13 @@ end
 function RoundService:_OnRunnerDied(char: Model)
     char:SetAttribute("Tagger", nil)
     char.Parent = workspace
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = 16
+    end
+
+    self:_SendRunnersLeft()
     self:_CheckRoundEnd()
 end
 
@@ -195,14 +228,15 @@ function RoundService:_StartRound()
         char.Parent = workspace.Runners
 
         local humanoid = char:FindFirstChildOfClass("Humanoid")
-        humanoid.WalkSpeed = CONFIG.RUNNER_WALKSPEED
-
         if humanoid then
+            humanoid.WalkSpeed = CONFIG.RUNNER_WALKSPEED
             humanoid.Died:Once(function()
                 self:_OnRunnerDied(char)
             end)
         end
     end
+
+    self:_SendRunnersLeft()
 
     local tagger = self:_SelectRandomTagger()
     if tagger then
@@ -233,6 +267,7 @@ function RoundService:_StartIntermission()
 end
 
 function RoundService:Start()
+    self:_SetupInitializeHandlers()
     self:_StartIntermission()
 end
 
