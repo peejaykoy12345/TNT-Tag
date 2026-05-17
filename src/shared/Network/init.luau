@@ -18,7 +18,11 @@ return {
                 Update = ByteNetMax.definePacket({
                     value = ByteNetMax.struct({
                         Name = ByteNetMax.string,
-                        Value = ByteNetMax.unknown,
+                        Value = ByteNetMax.struct({
+                            string = ByteNetMax.optional(ByteNetMax.string),
+                            uint32 = ByteNetMax.optional(ByteNetMax.uint32),
+                            custom = ByteNetMax.optional(ByteNetMax.unknown),
+                        }),
                     })
                 }),
             },
