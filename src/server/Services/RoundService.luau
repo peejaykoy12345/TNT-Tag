@@ -1,4 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local MapMarkers = workspace.MapMarkers
 
 local Values = ReplicatedStorage.Values
 local GameStarted: BoolValue = Values.GameStarted
@@ -8,10 +11,19 @@ local ReplicationPackets = Network.Replication.packets
 local UpdatePacket = ReplicationPackets.Update
 
 local CONFIG = {
-    INTERMISSION_TIME = 30,
+    INTERMISSION_TIME = 7,
 }
 
 local RoundService = {}
+
+function RoundService:_StartRound()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local char = plr.Character
+        if not char then continue end
+        
+        char:PivotTo(CFrame.new(MapMarkers.RoundStart.Position))
+    end
+end
 
 function RoundService:_StartIntermission()
     for i = CONFIG.INTERMISSION_TIME, 0, -1 do
@@ -19,7 +31,7 @@ function RoundService:_StartIntermission()
 
         if i == 0 then
             GameStarted.Value = true
-            print("Game started")
+            self:_StartRound()
             break
         end
 
