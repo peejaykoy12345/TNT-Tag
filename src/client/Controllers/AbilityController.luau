@@ -1,4 +1,3 @@
-local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Values = ReplicatedStorage.Values
@@ -12,20 +11,11 @@ local PerformPacket = AbilityPackets.Perform
 
 local AbilityController = {}
 
-function AbilityController:_FirePerformPacket()
+function AbilityController:FirePerformPacket()
+    print("Sending packet!")
     if not GameStarted.Value then return end
     
     PerformPacket.send({})
-end
-
-function AbilityController:Init()
-    UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then return end
-
-        if input.KeyCode == Enum.KeyCode.Q then
-            self:_FirePerformPacket()
-        end
-    end)
 end
 
 return AbilityController
