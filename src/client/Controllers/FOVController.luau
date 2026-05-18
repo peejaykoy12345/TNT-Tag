@@ -36,7 +36,7 @@ function FOVController:Init()
         if isMoving and gameStarted and not isFOVActive then
             isFOVActive = true
             TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV}):Play()
-        elseif (not isMoving and isFOVActive) or not gameStarted then
+        elseif (not isMoving or not gameStarted) and isFOVActive then
             isFOVActive = false
             TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV}):Play()
         end
