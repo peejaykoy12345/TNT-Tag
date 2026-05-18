@@ -26,6 +26,8 @@ function FOVController:Init()
         local char = plr.Character
         if not char then return end
 
+        local cam = workspace.CurrentCamera
+
         local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart
         local humanoid = char:FindFirstChildOfClass("Humanoid") :: Humanoid
         if not hrp or not humanoid then return end
@@ -34,10 +36,10 @@ function FOVController:Init()
 
         if isMoving and not isFOVActive then
             isFOVActive = true
-            TweenService:Create(workspace.CurrentCamera, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV}):Play()
+            TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV}):Play()
         elseif not isMoving and isFOVActive then
             isFOVActive = false
-            TweenService:Create(workspace.CurrentCamera, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV}):Play()
+            TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV}):Play()
         end
     end)
 end
