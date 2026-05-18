@@ -7,7 +7,12 @@ local MapMarkers = workspace.MapMarkers
 local Values = ReplicatedStorage.Values
 local GameStarted: BoolValue = Values.GameStarted
 
-local Network = require(ReplicatedStorage.Modules.Network)
+local Modules = ReplicatedStorage.Modules
+local Utilities = Modules.Utilities
+local GeneralUtilities = Utilities.General
+local AbilityUtilities = require(GeneralUtilities.AbilityUtilities)
+
+local Network = require(Modules.Network)
 local ReplicationPackets = Network.Replication.packets
 local InitializePacket = ReplicationPackets.Initialize
 local UpdatePacket = ReplicationPackets.Update
@@ -19,6 +24,9 @@ local CONFIG = {
     TAG_COOLDOWN = 3,
     TAGGER_WALKSPEED = 28,
     RUNNER_WALKSPEED = 26,
+    HITBOX = {
+        SIZE = Vector3.new(15, 15, 15)
+    },
 }
 
 local RoundService = {}
@@ -160,7 +168,7 @@ function RoundService:_InitializeTagging(tagger: Model)
     end)
 end
 
-function RoundService:_KillTagger()
+function RoundService:_ExplodeBomb()
     if self.currentConnection then
         self.currentConnection:Disconnect()
         self.currentConnection = nil
@@ -169,10 +177,42 @@ function RoundService:_KillTagger()
     for _, runner in ipairs(workspace.Runners:GetChildren()) do
         if not runner:GetAttribute("Tagger") then continue end
 
-        local humanoid = runner:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.Health = 0
-        end
+        local hrp = runner:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        local hb = AbilityUtilities:CreateHitbox({
+            SizeOrPart = CONFIG.HITBOX.SIZE,
+            CFrame = hrp.CFrame
+        })
+        hb:Start()
+
+        local hitSomething = false
+        local stopped = false
+
+        hb.HitSomeone:Connect(function(hitChars)
+            for _, hitChar in ipairs(hitChars) do
+                if stopped then return end
+                if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
+
+                hitSomething = true
+
+                local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
+                if targetHum then
+                    targetHum.Health = 0
+                end
+            end
+        end)
+
+       task.delay(0.2, function()
+            stopped = true
+            hb:Destroy()
+            if not hitSomething then
+                local humanoid = runner:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0
+                end
+            end  
+       end)
 
         self:_RemoveTaggerEffects(runner)
         runner:SetAttribute("Tagger", nil)
@@ -203,7 +243,7 @@ function RoundService:_StartRoundTimer()
         UpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
 
         if i == 0 then
-            self:_KillTagger()
+            self:_ExplodeBomb()
 
             if self:_CheckRoundEnd() then return end
 

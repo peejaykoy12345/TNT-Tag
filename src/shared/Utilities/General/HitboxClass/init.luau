@@ -20,7 +20,7 @@ local Players = game:GetService("Players")
 
 -- Initial error checking
 
-local aliveFolder = workspace.LivingBeings
+local aliveFolder = workspace.Runners
 local projectileFolder = workspace.Projectile
 
 assert(aliveFolder ~= nil, "Set the alive characters folder in the HitboxClass settings!")
