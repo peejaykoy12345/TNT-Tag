@@ -21,23 +21,22 @@ function FOVController:Init()
     local isFOVActive = false
 
     RunService.Heartbeat:Connect(function()
-        if not GameStarted.Value then return end
-
         local char = plr.Character
         if not char then return end
 
+        local gameStarted = GameStarted.Value
+
         local cam = workspace.CurrentCamera
 
-        local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart
         local humanoid = char:FindFirstChildOfClass("Humanoid") :: Humanoid
-        if not hrp or not humanoid then return end
+        if not humanoid then return end
 
         local isMoving = humanoid.MoveDirection.Magnitude > 0
 
-        if isMoving and not isFOVActive then
+        if isMoving and gameStarted and not isFOVActive then
             isFOVActive = true
             TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV}):Play()
-        elseif not isMoving and isFOVActive then
+        elseif (not isMoving and isFOVActive) or not gameStarted then
             isFOVActive = false
             TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV}):Play()
         end
