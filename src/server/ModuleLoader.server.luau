@@ -1,4 +1,4 @@
-local Services = game:GetService("ServerScriptService").Server.Services
+local Services = game:GetService("ServerScriptService").Services
 
 for _, module in ipairs(Services:GetDescendants()) do
 	if module:IsA("ModuleScript") then

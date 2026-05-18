@@ -3,7 +3,7 @@ local Players = game:GetService("Players")
 
 local Network = require(ReplicatedStorage.Modules.Network)
 local ReplicationPackets = Network.Replication.packets
-local UpdatePacket = ReplicationPackets.Update
+local UnreliableUpdatePacket = ReplicationPackets.UnreliableUpdate
 
 local plr = Players.LocalPlayer
 local HudGui = plr:WaitForChild("PlayerGui"):WaitForChild("HudGui")
@@ -14,7 +14,7 @@ local TimerLabelShadow = TimerLabel:WaitForChild("TimerLabel") :: TextLabel
 local TimerUIController = {}
 
 function TimerUIController:Init()
-    UpdatePacket.listen(function(data)
+    UnreliableUpdatePacket.listen(function(data)
         local name = data.Name
         local value = data.Value
 

@@ -16,6 +16,7 @@ local VelocityUtilities = require(GeneralUtilities.VelocityUtils)
 local Network = require(Modules.Network)
 local ReplicationPackets = Network.Replication.packets
 local InitializePacket = ReplicationPackets.Initialize
+local UnreliableUpdatePacket = ReplicationPackets.UnreliableUpdate
 local UpdatePacket = ReplicationPackets.Update
 
 local CONFIG = {
@@ -260,7 +261,7 @@ function RoundService:_StartRoundTimer()
     for i = CONFIG.ROUND_TIME, 0, -1 do
         if not GameStarted.Value then return end
 
-        UpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
+        UnreliableUpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
 
         if i == 0 then
             self:_ExplodeBomb()
@@ -314,7 +315,7 @@ function RoundService:_StartIntermission()
     for i = CONFIG.INTERMISSION_TIME, 0, -1 do
         if GameStarted.Value then return end
 
-        UpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
+        UnreliableUpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
 
         if i == 0 then
             if #Players:GetPlayers() < 2 then
