@@ -7,6 +7,7 @@ local Cooldown = require(GeneralUtilities.Cooldown)
 local HitboxClass = require(GeneralUtilities.HitboxClass)
 
 local AbilityUtilities = {}
+AbilityUtilities.ragdollTasks = {}
 
 function AbilityUtilities:CanPerformAction(char: Model, actionName: string): boolean
     if Cooldown:IsOnCooldown(char, actionName) then
@@ -64,6 +65,22 @@ function AbilityUtilities:CreateHitbox(custom_config: CreateHitboxConfig)
 	end
 
 	return hitbox
+end
+
+function AbilityUtilities:RagdollCharacter(target: Model, duration: number, ragdollStatus: boolean?)
+	ragdollStatus = ragdollStatus or true
+
+	local RagdollTrigger = target:FindFirstChild("RagdollTrigger")
+	if not RagdollTrigger then
+		warn(`RagdollTrigger not found in {target.Name}`)
+		return
+	end
+
+	RagdollTrigger.Value = ragdollStatus
+	self.ragdollTasks[target] = task.delay(duration, function()
+		RagdollTrigger.Value = not ragdollStatus
+		self.ragdollTasks[target] = nil
+	end)
 end
 
 return AbilityUtilities

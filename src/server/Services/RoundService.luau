@@ -11,6 +11,7 @@ local Modules = ReplicatedStorage.Modules
 local Utilities = Modules.Utilities
 local GeneralUtilities = Utilities.General
 local AbilityUtilities = require(GeneralUtilities.AbilityUtilities)
+local VelocityUtilities = require(GeneralUtilities.VelocityUtils)
 
 local Network = require(Modules.Network)
 local ReplicationPackets = Network.Replication.packets
@@ -27,6 +28,11 @@ local CONFIG = {
     HITBOX = {
         SIZE = Vector3.new(15, 15, 15)
     },
+    KNOCKBACK = {
+        POWER = 80,
+        DURATION = .2
+    },
+    RAGDOLL_DURATION = 2,
 }
 
 local RoundService = {}
@@ -180,9 +186,11 @@ function RoundService:_ExplodeBomb()
         local hrp = runner:FindFirstChild("HumanoidRootPart")
         if not hrp then continue end
 
+        local origin = hrp.CFrame
+
         local hb = AbilityUtilities:CreateHitbox({
             SizeOrPart = CONFIG.HITBOX.SIZE,
-            CFrame = hrp.CFrame
+            CFrame = origin
         })
         hb:Start()
 
@@ -194,12 +202,21 @@ function RoundService:_ExplodeBomb()
                 if stopped then return end
                 if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
 
+                -- We check this so that we know if it's a first time 
+                if not hitSomething then
+                    AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+                    VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+                end
+
                 hitSomething = true
 
                 local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
                 if targetHum then
                     targetHum.Health = 0
                 end
+
+                AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
+                VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
             end
         end)
 
@@ -211,7 +228,10 @@ function RoundService:_ExplodeBomb()
                 if humanoid then
                     humanoid.Health = 0
                 end
-            end  
+
+                AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+                VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+            end
        end)
 
         self:_RemoveTaggerEffects(runner)
