@@ -74,6 +74,7 @@ function RoundService:_ApplyTaggerEffects(tagger: Model)
     local weld = Instance.new("Weld", bombModel.PrimaryPart)
     weld.Part0 = RightArm
     weld.Part1 = bombModel.PrimaryPart
+    weld.C1 = bombModel:GetAttribute("CFrameOffset")
 end
 
 function RoundService:_RemoveTaggerEffects(tagger: Model)
