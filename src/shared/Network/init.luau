@@ -1,3 +1,4 @@
+local BugReporterService = game:GetService("BugReporterService")
 local ByteNetMax = require(script.ByteNetMax)
 
 return {
@@ -7,7 +8,7 @@ return {
             queries = {},
         }
     end),
-    Ability = ByteNetMax.defineNamespace("General", function()
+    Ability = ByteNetMax.defineNamespace("Ability", function()
         return {
             packets = {
                 Perform = ByteNetMax.definePacket({
@@ -15,6 +16,27 @@ return {
                 }),
             },
             queries = {},
+        }
+    end),
+    Inventory = ByteNetMax.defineNamespace("Inventory", function()
+        return {
+            packets = {
+                EquipItem = ByteNetMax.definePacket({
+                    value = ByteNetMax.struct({
+                        ItemName = ByteNetMax.string,
+                        Type = ByteNetMax.string,
+                    })
+                }),
+            },
+            queries = {
+                GetInventoryData = ByteNetMax.defineQuery({
+                    request = ByteNetMax.struct({}),
+                    response = ByteNetMax.struct({
+                        Equipped = ByteNetMax.map(ByteNetMax.string, ByteNetMax.string),
+                        Owned = ByteNetMax.map(ByteNetMax.string, ByteNetMax.array(ByteNetMax.string))
+                    })
+                })
+            },
         }
     end),
     Replication = ByteNetMax.defineNamespace("Replication", function()
@@ -28,6 +50,10 @@ return {
                 Update = ByteNetMax.definePacket({
                     value = ByteNetMax.struct({
                         Name = ByteNetMax.string,
+                        Args = ByteNetMax.optional(ByteNetMax.struct({
+                            Type = ByteNetMax.optional(ByteNetMax.string),
+                            Action = ByteNetMax.optional(ByteNetMax.string),
+                        })),
                         Value = ByteNetMax.struct({
                             string = ByteNetMax.optional(ByteNetMax.string),
                             uint8 = ByteNetMax.optional(ByteNetMax.uint8),
@@ -41,6 +67,10 @@ return {
                     reliabilityType = "unreliable",
                     value = ByteNetMax.struct({
                         Name = ByteNetMax.string,
+                        Args = ByteNetMax.optional(ByteNetMax.struct({
+                            Type = ByteNetMax.optional(ByteNetMax.string),
+                            Action = ByteNetMax.optional(ByteNetMax.string),
+                        })),
                         Value = ByteNetMax.struct({
                             string = ByteNetMax.optional(ByteNetMax.string),
                             uint8 = ByteNetMax.optional(ByteNetMax.uint8),
@@ -51,9 +81,7 @@ return {
                     })
                 }),
             },
-            queries = {
-
-            },
+            queries = {},
         }
     end),
 }

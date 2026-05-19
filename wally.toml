@@ -7,4 +7,4 @@ realm = "shared"
 [dependencies]
 
 [server-dependencies]
-profilestore = "lm-loleris/profilestore@1.0.3"
+ProfileStore = "lm-loleris/profilestore@1.0.3"

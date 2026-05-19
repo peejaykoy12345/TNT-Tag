@@ -75,10 +75,6 @@ function RagdollService:Init()
             setReg[char] = nil
         end
     end)
-
-    for _, v in pairs(workspace.LivingBeings:GetChildren()) do
-        RagdollService:_Setup(v)
-    end
 end
 
 return RagdollService
