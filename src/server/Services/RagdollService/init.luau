@@ -68,13 +68,34 @@ function RagdollService:_Setup(char)
 	r6Client:Clone().Parent = char
 end
 
+function RagdollService:_SetupPlayer(plr: Player)
+	plr.CharacterAdded:Connect(function(char)
+		self:_Setup(char)
+	end)
+
+	plr.CharacterRemoving:Connect(function(char)
+		setReg[char] = nil
+	end)
+end
+
 function RagdollService:Init()
-    Players.PlayerRemoving:Connect(function(player)
-        local char = player.Character
-        if char then
-            setReg[char] = nil
-        end
-    end)
+	for _, plr in ipairs(Players:GetPlayers()) do
+		self:_SetupPlayer(plr)
+		if plr.Character then
+			self:_Setup(plr.Character)
+		end
+	end
+
+	Players.PlayerRemoving:Connect(function(plr)
+		local char = plr.Character
+		if char then
+			setReg[char] = nil
+		end
+	end)
+
+	Players.PlayerAdded:Connect(function(plr)
+		self:_SetupPlayer(plr)
+	end)
 end
 
 return RagdollService
