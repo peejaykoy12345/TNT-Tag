@@ -38,20 +38,19 @@ function Velocity.ApplyKnockback(origin: Vector3 | CFrame, target: Model, knockb
 	end
 
 	hum.AutoRotate = false
+	hum:SetAttribute("ServerHumanoidAutoRotateLock", true)
 
 	local bodyVelocity = Instance.new("BodyVelocity")
 	bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
 	bodyVelocity.Velocity = direction * knockback
 	bodyVelocity.Parent = ehrp
 
-	print("Knockback: ", knockback, "Duration: ", duration)
-	print(bodyVelocity.Velocity, " is velocity")
-
 	task.delay(duration, function()
 		if bodyVelocity then
 			bodyVelocity:Destroy()
 		end
 
+		hum:SetAttribute("ServerHumanoidAutoRotateLock", nil)
 		hum.AutoRotate = true
 	end)
 end
