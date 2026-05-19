@@ -15,7 +15,7 @@ local InitializePacket = ReplicationPackets.Initialize
 local UpdatePacket = ReplicationPackets.Update
 
 local InventoryNamespace = Network.Inventory
-local InventoryPackets =InventoryNamespace.packets
+local InventoryPackets = InventoryNamespace.packets
 local InventoryQueries = InventoryNamespace.queries
 local EquipItem = InventoryPackets.EquipItem
 local GetInventoryData = InventoryQueries.GetInventoryData
@@ -29,134 +29,149 @@ local InfoFrame = InventoryMenu:WaitForChild("InfoFrame") :: Frame
 local ContentFrame = InventoryMenu:WaitForChild("Content") :: Frame
 
 local CONFIG = {
-    DEFAULT_TAB = "Bombs",
+	DEFAULT_TAB = "Bombs",
 }
 
 local InventoryController = {}
 
 function InventoryController:_ChangeTextContent(TextLabel: TextLabel, text: string)
-    local TextLabelShadow = TextLabel:WaitForChild(TextLabel.Name)
+	local TextLabelShadow = TextLabel:WaitForChild(TextLabel.Name)
 
-    TextLabel.Text = text
-    TextLabelShadow.Text = text
+	TextLabel.Text = text
+	TextLabelShadow.Text = text
 end
 
 function InventoryController:_UpdateContent(tabName: string, itemName: string, action: "Add" | "Remove")
-    local contentFrame = ContentFrame:FindFirstChild(tabName)
-    if not contentFrame then
-        warn(`Content frame: {tabName} not found`)
-        return
-    end
+	local contentFrame = ContentFrame:FindFirstChild(tabName)
+	if not contentFrame then
+		warn(`Content frame: {tabName} not found`)
+		return
+	end
 
-    local itemConfig = ItemConfig[tabName][itemName]
+	local itemConfig = ItemConfig[tabName][itemName]
 
-    if action == "Add" then
-        local itemFrame = contentFrame.Template:Clone()
-        itemFrame.Visible = true
-        itemFrame.Parent = contentFrame
+	if action == "Add" then
+		local itemFrame = contentFrame.Template:Clone()
+		itemFrame.Visible = true
+		itemFrame.Parent = contentFrame
 
-        local rarity = itemConfig.Rarity
+		local rarity = itemConfig.Rarity
 
-        local button = itemFrame.Button
-        self:_ChangeTextContent(button.NameLabel, itemName)
-        self:_ChangeTextContent(button.RarityLabel, rarity)
+		local button = itemFrame.Button
+		self:_ChangeTextContent(button.NameLabel, itemName)
+		self:_ChangeTextContent(button.RarityLabel, rarity)
 
-        button.Activated:Connect(function()
-            local nameLabel = InfoFrame:WaitForChild("NameLabel") :: TextLabel
-            local rarityLabel = InfoFrame:WaitForChild("RarityLabel") :: TextLabel
-            
-            if nameLabel.Text == itemName and InfoFrame.Visible then
-                InfoFrame.Visible = false
-                nameLabel.Text = ""
-                InfoFrame:SetAttribute("CurrentType", nil)
-            else
-                InfoFrame.Visible = true
-            end
+		button.Activated:Connect(function()
+			local nameLabel = InfoFrame:WaitForChild("NameLabel") :: TextLabel
+			local rarityLabel = InfoFrame:WaitForChild("RarityLabel") :: TextLabel
 
-            self:_ChangeTextContent(nameLabel, itemName)
-            self:_ChangeTextContent(rarityLabel, rarity)
+			if nameLabel.Text == itemName and InfoFrame:GetAttribute("CurrentType") == tabName and InfoFrame.Visible then
+				InfoFrame.Visible = false
+				nameLabel.Text = ""
+				InfoFrame:SetAttribute("CurrentType", nil)
+			else
+				InfoFrame.Visible = true
+			end
 
-            InfoFrame:SetAttribute("CurrentType", tabName)
-        end)
+			self:_ChangeTextContent(nameLabel, itemName)
+			self:_ChangeTextContent(rarityLabel, rarity)
+			InfoFrame:SetAttribute("CurrentType", tabName)
 
-        itemFrame.Name = itemName
-    elseif action == "Remove" then
-        local itemFrame = contentFrame:FindFirstChild(itemName)
-        if itemFrame then
-            itemFrame:Destroy()
-        end
-    else
-        warn(`Invalid action: {action}`)
-    end
+			local isEquipped = self.equipped and self.equipped[tabName] == itemName
+			self:_ChangeTextContent(InfoFrame.EquipButton.EquipLabel, isEquipped and "Equipped" or "Equip")
+		end)
+
+		itemFrame.Name = itemName
+	elseif action == "Remove" then
+		local itemFrame = contentFrame:FindFirstChild(itemName)
+		if itemFrame then
+			itemFrame:Destroy()
+		end
+	else
+		warn(`Invalid action: {action}`)
+	end
 end
 
 function InventoryController:_ShowCurrentTab()
-    if self.currentTabFrame then
-        self.currentTabFrame.Visible = false
-    end
+	if self.currentTabFrame then
+		self.currentTabFrame.Visible = false
+	end
 
-    local tabFrame = ContentFrame:FindFirstChild(self.currentTab)
-    if not tabFrame then
-        warn(`Tab Frame {self.currentTab} not found`)
-        return
-    end
+	local tabFrame = ContentFrame:FindFirstChild(self.currentTab)
+	if not tabFrame then
+		warn(`Tab Frame {self.currentTab} not found`)
+		return
+	end
 
-    tabFrame.Visible = true
-    self.currentTabFrame = tabFrame
+	tabFrame.Visible = true
+	self.currentTabFrame = tabFrame
 end
 
 function InventoryController:Init()
-    UpdatePacket.listen(function(data)
-        if data.Name ~= "Inventory" then return end
+	UpdatePacket.listen(function(data)
+		if data.Name == "Inventory" then
+			local args = data.Args
+			local value = data.Value
 
-        local args = data.Args
-        local value = data.Value
+			local tabName = args.Type
+			local action = args.Action
+			local itemName = value.string
 
-        local tabName = args.Type
-        local action = args.Action
-        local itemName = value.string
+			self:_UpdateContent(tabName, itemName, action)
 
-        self:_UpdateContent(tabName, itemName, action)
-    end)
+		elseif data.Name == "OwnedItem" then
+            local args = data.Args
+            local itemName = data.Value.string
+            self.equipped[args.Type] = itemName
 
-    InfoFrame:WaitForChild("EquipButton").Activated:Connect(function()
-        local nameLabel = InfoFrame:WaitForChild("NameLabel") :: TextLabel
-        if nameLabel.Text == "" then return end
-
-        local currentType = InfoFrame:GetAttribute("CurrentType")
-        if not currentType then return end
-
-        EquipItem.send({
-            ItemName = nameLabel.Text,
-            Type = currentType,
-        })
-    end)
-
-    HeaderFrame:WaitForChild("CloseButton").Activated:Connect(function()
-        InventoryMenu.Visible = false
-    end)
-
-    local result = GetInventoryData.invoke({})
-    for tabName, owned in pairs(result.Owned) do
-        for _, itemName in ipairs(owned) do
-            self:_UpdateContent(tabName, itemName, "Add")
+            local nameLabel = InfoFrame:FindFirstChild("NameLabel") :: TextLabel
+            if InfoFrame.Visible and nameLabel and nameLabel.Text ~= "" and InfoFrame:GetAttribute("CurrentType") == args.Type then
+                local isEquipped = self.equipped[args.Type] == nameLabel.Text
+                self:_ChangeTextContent(InfoFrame.EquipButton.EquipLabel, isEquipped and "Equipped" or "Equip")
+            end
         end
-    end
+	end)
+
+	InfoFrame:WaitForChild("EquipButton").Activated:Connect(function()
+		local nameLabel = InfoFrame:WaitForChild("NameLabel") :: TextLabel
+		if nameLabel.Text == "" then return end
+
+		local currentType = InfoFrame:GetAttribute("CurrentType")
+		if not currentType then return end
+
+		EquipItem.send({
+			ItemName = nameLabel.Text,
+			Type = currentType,
+		})
+	end)
+
+	HeaderFrame:WaitForChild("CloseButton").Activated:Connect(function()
+		InventoryMenu.Visible = false
+	end)
+
+	local result = GetInventoryData.invoke({})
+	self.equipped = result.Equipped
+
+	for tabName, owned in pairs(result.Owned) do
+		for _, itemName in ipairs(owned) do
+			self:_UpdateContent(tabName, itemName, "Add")
+		end
+	end
 end
 
 function InventoryController:Start()
-    ContentFrame.Visible = true
-    self.currentTab = CONFIG.DEFAULT_TAB
-    self:_ShowCurrentTab()
+	ContentFrame.Visible = true
+	self.currentTab = CONFIG.DEFAULT_TAB
+	self:_ShowCurrentTab()
 
-    for _, btn in ipairs(TabsFrame:GetChildren()) do
-        if not btn:IsA("ImageButton") then continue end
+	for _, btn in ipairs(TabsFrame:GetChildren()) do
+		if not btn:IsA("ImageButton") then continue end
 
-        btn.Activated:Connect(function()
-            self.currentTab = btn.Name
-            self:_ShowCurrentTab()
-        end)
-    end
+		btn.Activated:Connect(function()
+			self.currentTab = btn.Name
+			self:_ShowCurrentTab()
+		end)
+	end
 end
 
 return InventoryController

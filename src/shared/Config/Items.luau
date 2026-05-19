@@ -12,6 +12,10 @@ local Items = {
     Abilities = {
         Default = {
             Rarity = "Common",
+        },
+        -- For testing 
+        Diddy = {
+            Rarity = "SSS Rank",
         }
     },
 }
