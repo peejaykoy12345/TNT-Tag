@@ -47,19 +47,6 @@ function InventoryService:Init()
             },
         }, plr)
     end)
-
-    task.delay(5, function()
-        local Player1 = Players:FindFirstChild("Player1") :: Player?
-        while not Player1 do
-            task.wait(1)
-            Player1 = Players:FindFirstChild("Player1") :: Player?
-        end
-
-        self:GivePlayerItem(Player1, "Bombs", "Ball")
-        self:GivePlayerItem(Player1, "Bombs", "Ball")
-        self:GivePlayerItem(Player1, "Bombs", "Ball")
-        print("Gave player 1 a bomb")
-    end)
 end
 
 function InventoryService:DoesPlayerOwnItem(plr: Player, type: string, itemName: string): boolean

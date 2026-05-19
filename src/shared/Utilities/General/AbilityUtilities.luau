@@ -54,10 +54,7 @@ function AbilityUtilities:CreateHitbox(custom_config: CreateHitboxConfig)
 
 	local hitbox = HitboxClass.new(config)
 	if custom_config.CFrame then 
-		print(hitbox.Position, " initial")
-		print("CFRAME: ",custom_config.CFrame )
 		hitbox:SetPosition(custom_config.CFrame)
-		print(hitbox.Position, " after")
 	end
 
 	if custom_config.WeldedPart then
