@@ -2,6 +2,9 @@ local Items = {
     Bombs = {
         Default = {
             Rarity = "Common",
+        },
+        Ball = {
+            Rarity = "Cal",
         }
     },
     Sounds = {

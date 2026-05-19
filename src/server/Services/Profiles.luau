@@ -34,7 +34,7 @@ local PROFILE_TEMPLATE: ProfileData = {
     }
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_V1", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_V4", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 

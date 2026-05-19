@@ -1,11 +1,17 @@
+local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
 local MapMarkers = workspace.MapMarkers
 
+local Assets = ReplicatedStorage.Assets
+local Bombs = Assets.Bombs
+
 local Values = ReplicatedStorage.Values
 local GameStarted: BoolValue = Values.GameStarted
+
+local InventoryService = require(ServerScriptService.Services.InventoryService)
 
 local Modules = ReplicatedStorage.Modules
 local Utilities = Modules.Utilities
@@ -39,17 +45,49 @@ local CONFIG = {
 local RoundService = {}
 
 function RoundService:_ApplyTaggerEffects(tagger: Model)
+    local RightArm = tagger:FindFirstChild("Right Arm") :: BasePart
+    if not RightArm then return end
+
+    local RightGripAttachment = RightArm:FindFirstChild("RightGripAttachment") :: Attachment
+    if not RightGripAttachment then return end
+
     local highlight = Instance.new("Highlight")
     highlight.FillColor = Color3.fromRGB(255, 0, 0)
     highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
     highlight.Name = "TaggerHighlight"
     highlight.Parent = tagger
+
+    local plr = Players:GetPlayerFromCharacter(tagger)
+    if not plr then
+        warn(`[Fatal Error] No player is found for: {tagger.Name}`)
+        return
+    end
+
+    local equippedBomb = InventoryService:GetEquippedItem(plr, "Bombs")
+    if not equippedBomb then return end
+
+    local bombModel = Bombs[equippedBomb]:Clone() :: Model
+    bombModel:PivotTo(RightGripAttachment.WorldCFrame * bombModel:GetAttribute("CFrameOffset"))
+    bombModel.Name = "Bomb"
+    bombModel.Parent = RightArm
+
+    local weld = Instance.new("Weld", bombModel.PrimaryPart)
+    weld.Part0 = RightArm
+    weld.Part1 = bombModel.PrimaryPart
 end
 
 function RoundService:_RemoveTaggerEffects(tagger: Model)
     local highlight = tagger:FindFirstChild("TaggerHighlight")
     if highlight then
         highlight:Destroy()
+    end
+
+    local RightArm = tagger:FindFirstChild("Right Arm") :: BasePart
+    if RightArm then
+        local bomb = RightArm:FindFirstChild("Bomb")
+        if bomb then
+            bomb:Destroy()
+        end
     end
 end
 
@@ -176,85 +214,89 @@ function RoundService:_InitializeTagging(tagger: Model)
 end
 
 function RoundService:_ExplodeBomb()
-    if self.currentConnection then
-        self.currentConnection:Disconnect()
-        self.currentConnection = nil
-    end
+	if self.currentConnection then
+		self.currentConnection:Disconnect()
+		self.currentConnection = nil
+	end
 
-    for _, runner in ipairs(workspace.Runners:GetChildren()) do
-        if not runner:GetAttribute("Tagger") then continue end
+	for _, runner in ipairs(workspace.Runners:GetChildren()) do
+		if not runner:GetAttribute("Tagger") then continue end
 
-        local hrp = runner:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
+		local hrp = runner:FindFirstChild("HumanoidRootPart")
+		if not hrp then continue end
 
-        local origin = hrp.CFrame
+		local origin = hrp.CFrame
 
-        local hb = AbilityUtilities:CreateHitbox({
-            SizeOrPart = CONFIG.HITBOX.SIZE,
-            CFrame = origin
-        })
-        hb:Start()
+		local hb = AbilityUtilities:CreateHitbox({
+			SizeOrPart = CONFIG.HITBOX.SIZE,
+			CFrame = origin
+		})
+		hb:Start()
 
-        local hitSomething = false
-        local stopped = false
+		local hitSomething = false
+		local stopped = false
 
-        hb.HitSomeone:Connect(function(hitChars)
-            for _, hitChar in ipairs(hitChars) do
-                if stopped then return end
-                if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
+		hb.HitSomeone:Connect(function(hitChars)
+			for _, hitChar in ipairs(hitChars) do
+				if stopped then return end
+				if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
 
-                -- We check this so that we know if it's a first time 
-                if not hitSomething then
-                    AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
-                    VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
-                end
+				if not hitSomething then
+					AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+					VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+				end
 
-                hitSomething = true
+				hitSomething = true
 
-                local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
-                if targetHum then
-                    targetHum.Health = 0
-                end
+				local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
+				if targetHum then
+					targetHum.Health = 0
+				end
 
-                AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
-                VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
-            end
-        end)
+				AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
+				VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+			end
+		end)
 
-       task.delay(0.2, function()
-            stopped = true
-            hb:Destroy()
-            if not hitSomething then
-                local humanoid = runner:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.Health = 0
-                end
+		task.delay(0.2, function()
+			stopped = true
+			hb:Destroy()
+			if not hitSomething then
+				local humanoid = runner:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					runner:SetAttribute("Exploding", true)
+					humanoid.Health = 0
+					task.delay(0, function()
+						runner:SetAttribute("Exploding", nil)
+					end)
+				end
 
-                AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
-                VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
-            end
-       end)
+				AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+				VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+			end
+		end)
 
-        self:_RemoveTaggerEffects(runner)
-        runner:SetAttribute("Tagger", nil)
-        break
-    end
+		self:_RemoveTaggerEffects(runner)
+		runner:SetAttribute("Tagger", nil)
+		break
+	end
 end
 
 function RoundService:_OnRunnerDied(char: Model)
-    if not GameStarted.Value then return end
+	if not GameStarted.Value then return end
+	if char:GetAttribute("Exploding") then return end
 
-    self:_RemoveTaggerEffects(char)
-    char:SetAttribute("Tagger", nil)
-    char.Parent = workspace
+	self:_RemoveTaggerEffects(char)
+	char:SetAttribute("Tagger", nil)
+	char.Parent = workspace
 
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.WalkSpeed = 16
-    end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.WalkSpeed = 16
+	end
 
-    self:_SendRunnersLeft()
-    self:_CheckRoundEnd()
+	self:_SendRunnersLeft()
+	self:_CheckRoundEnd()
 end
 
 function RoundService:_StartRoundTimer()

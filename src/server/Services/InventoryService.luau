@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -46,6 +47,19 @@ function InventoryService:Init()
             },
         }, plr)
     end)
+
+    task.delay(5, function()
+        local Player1 = Players:FindFirstChild("Player1") :: Player?
+        while not Player1 do
+            task.wait(1)
+            Player1 = Players:FindFirstChild("Player1") :: Player?
+        end
+
+        self:GivePlayerItem(Player1, "Bombs", "Ball")
+        self:GivePlayerItem(Player1, "Bombs", "Ball")
+        self:GivePlayerItem(Player1, "Bombs", "Ball")
+        print("Gave player 1 a bomb")
+    end)
 end
 
 function InventoryService:DoesPlayerOwnItem(plr: Player, type: string, itemName: string): boolean
@@ -62,8 +76,32 @@ function InventoryService:GivePlayerItem(plr: Player, type: string, itemName: st
     if not profile then return end
 
     if not profile.Data.Inventory.Owned[type] then return end
+    if self:DoesPlayerOwnItem(plr, type, itemName) then return end -- If already owned dont give
 
     table.insert(profile.Data.Inventory.Owned[type], itemName)
+
+    UpdatePacket.sendTo({
+        Name = "Inventory",
+        Args = {
+            Action = "Add",
+            Type = type,
+        },
+        Value = {
+            string = itemName,
+        },
+    }, plr)
+end
+
+function InventoryService:GetEquippedItem(plr: Player, type: string): string?
+    local inventory = Profiles:GetData(plr, "Inventory")
+    if not inventory then return end
+
+    if not inventory.Equipped[type] then 
+        warn(`{type} is not a valid item type`)
+        return 
+    end
+
+    return inventory.Equipped[type]
 end
 
 function InventoryService:IsItemEquipped(plr: Player, type: string, itemName: string): boolean

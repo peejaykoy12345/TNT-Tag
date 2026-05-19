@@ -51,6 +51,9 @@ function InventoryController:_UpdateContent(tabName: string, itemName: string, a
 	local itemConfig = ItemConfig[tabName][itemName]
 
 	if action == "Add" then
+		-- If already in then dont add to prevent duplicates
+		if contentFrame:FindFirstChild(itemName) then return end
+
 		local itemFrame = contentFrame.Template:Clone()
 		itemFrame.Visible = true
 		itemFrame.Parent = contentFrame
