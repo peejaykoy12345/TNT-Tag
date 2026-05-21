@@ -42,7 +42,7 @@ local CONFIG = {
         POWER = 80,
         DURATION = .2
     },
-    RAGDOLL_DURATION = 2,
+    RAGDOLL_DURATION = 1,
 }
 
 local RoundService = {}
@@ -267,11 +267,8 @@ function RoundService:_ExplodeBomb()
 
 				local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
 				if targetHum then
-					targetHum.Health = -999
+					targetHum:TakeDamage(targetHum.Health)
 				end
-
-				AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
-				VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 			end
 		end)
 
@@ -279,17 +276,17 @@ function RoundService:_ExplodeBomb()
 			stopped = true
 			hb:Destroy()
 			if not hitSomething then
+                AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+				VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+
 				local humanoid = runner:FindFirstChildOfClass("Humanoid")
 				if humanoid then
 					runner:SetAttribute("Exploding", true)
-					humanoid.Health = 0
-					task.delay(0, function()
+					humanoid:TakeDamage(humanoid.Health)
+					task.delay(0.5, function()
 						runner:SetAttribute("Exploding", nil)
 					end)
 				end
-
-				AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
-				VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 			end
 		end)
 
