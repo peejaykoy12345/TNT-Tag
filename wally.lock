@@ -5,9 +5,14 @@ registry = "test"
 [[package]]
 name = "jhoray/tnt-tag"
 version = "0.1.0"
-dependencies = [["ProfileStore", "lm-loleris/profilestore@1.0.3"]]
+dependencies = [["ForgeVFX", "zilibobi/forge-vfx@2.4.0"], ["ProfileStore", "lm-loleris/profilestore@1.0.3"]]
 
 [[package]]
 name = "lm-loleris/profilestore"
 version = "1.0.3"
+dependencies = []
+
+[[package]]
+name = "zilibobi/forge-vfx"
+version = "2.4.0"
 dependencies = []
