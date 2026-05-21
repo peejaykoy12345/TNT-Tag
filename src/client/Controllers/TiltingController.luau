@@ -34,7 +34,7 @@ function TiltController:Init()
 			lateralDot = 0
 		end
 
-		local rootC0 = CFrame.new(0, -1, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0)
+		local rootC0 = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, 0)
 		local leftC0 = CFrame.new(-1, 0.5, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0)
 		local rightC0 = CFrame.new(1, 0.5, 0, 0, 0, 1, 0, 1, 0, -1, 0, 0)
 
