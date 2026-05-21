@@ -40,7 +40,7 @@ local CONFIG = {
     },
     KNOCKBACK = {
         POWER = 80,
-        DURATION = .2
+        DURATION = .5
     },
     RAGDOLL_DURATION = 1,
 }
@@ -152,7 +152,10 @@ function RoundService:_CleanupRound()
         self.currentConnection = nil
     end
 
-    for _, char in ipairs(workspace.Runners:GetChildren()) do
+    local runners = workspace.Runners:GetChildren()
+    -- print("Runners: ", runners)
+
+    for _, char in ipairs(runners) do
         self:_RemoveTaggerEffects(char)
         char:SetAttribute("Tagger", nil)
 
@@ -160,6 +163,8 @@ function RoundService:_CleanupRound()
         if hum then
             hum.WalkSpeed = 16
         end
+
+        -- print(char.Name, " is a runner")
 
         char.Parent = workspace
         char:PivotTo(MapMarkers.Spawn.CFrame)
@@ -267,7 +272,9 @@ function RoundService:_ExplodeBomb()
 
 				local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
 				if targetHum then
-					targetHum:TakeDamage(targetHum.Health)
+                    task.delay(CONFIG.RAGDOLL_DURATION, function()
+                        targetHum:TakeDamage(targetHum.Health)
+                    end)
 				end
 			end
 		end)
@@ -282,12 +289,20 @@ function RoundService:_ExplodeBomb()
 				local humanoid = runner:FindFirstChildOfClass("Humanoid")
 				if humanoid then
 					runner:SetAttribute("Exploding", true)
-					humanoid:TakeDamage(humanoid.Health)
+					
+                    task.delay(CONFIG.RAGDOLL_DURATION, function()
+                        humanoid:TakeDamage(humanoid.Health)
+                    end)
+
 					task.delay(0.5, function()
 						runner:SetAttribute("Exploding", nil)
 					end)
 				end
 			end
+
+            task.defer(function()
+                self:_CheckRoundEnd()
+            end)
 		end)
 
 		self:_RemoveTaggerEffects(runner)
