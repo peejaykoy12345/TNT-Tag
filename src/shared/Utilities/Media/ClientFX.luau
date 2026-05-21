@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Modules = ReplicatedStorage.Modules
-local ClientFXPacket = require(Modules.Network).Misc.packets.ClientFXPacket
+local ClientFXPacket = require(Modules.Network).VFX.packets.ClientFXPacket
 local SFXPackets = require(Modules.Network).SFX.packets
 
 local ClientFX = {}
