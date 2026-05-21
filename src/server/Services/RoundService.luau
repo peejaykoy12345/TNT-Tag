@@ -7,6 +7,7 @@ local MapMarkers = workspace.MapMarkers
 
 local Assets = ReplicatedStorage.Assets
 local Bombs = Assets.Bombs
+local Auras = Assets.Auras
 
 local Values = ReplicatedStorage.Values
 local GameStarted: BoolValue = Values.GameStarted
@@ -18,6 +19,8 @@ local Utilities = Modules.Utilities
 local GeneralUtilities = Utilities.General
 local AbilityUtilities = require(GeneralUtilities.AbilityUtilities)
 local VelocityUtilities = require(GeneralUtilities.VelocityUtils)
+
+local ClientFX = require(Utilities.Media.ClientFX)
 
 local Network = require(Modules.Network)
 local ReplicationPackets = Network.Replication.packets
@@ -46,16 +49,11 @@ local RoundService = {}
 
 function RoundService:_ApplyTaggerEffects(tagger: Model)
     local RightArm = tagger:FindFirstChild("Right Arm") :: BasePart
+    local hrp = tagger:FindFirstChild("HumanoidRootPart") :: BasePart
     if not RightArm then return end
 
     local RightGripAttachment = RightArm:FindFirstChild("RightGripAttachment") :: Attachment
     if not RightGripAttachment then return end
-
-    local highlight = Instance.new("Highlight")
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-    highlight.Name = "TaggerHighlight"
-    highlight.Parent = tagger
 
     local plr = Players:GetPlayerFromCharacter(tagger)
     if not plr then
@@ -63,8 +61,26 @@ function RoundService:_ApplyTaggerEffects(tagger: Model)
         return
     end
 
+    local equippedAura = InventoryService:GetEquippedItem(plr, "Auras")
     local equippedBomb = InventoryService:GetEquippedItem(plr, "Bombs")
-    if not equippedBomb then return end
+    if not equippedAura or not equippedBomb then return end
+
+    self.currentTaggerVFXHandleId = ClientFX:Construct(
+        {
+            Name = "ToggleParticles",
+            Type = "General",
+        },
+        {
+            vfx = Auras[equippedAura],
+            parent = hrp,
+            position = hrp.Position,
+        }
+    )
+    ClientFX:Start(self.currentTaggerVFXHandleId, {
+        vfxCFrame = hrp.CFrame,
+        position = hrp.Position,
+        weld = true,
+    })
 
     local bombModel = Bombs[equippedBomb]:Clone() :: Model
     bombModel:PivotTo(RightGripAttachment.WorldCFrame * bombModel:GetAttribute("CFrameOffset"))
@@ -78,9 +94,9 @@ function RoundService:_ApplyTaggerEffects(tagger: Model)
 end
 
 function RoundService:_RemoveTaggerEffects(tagger: Model)
-    local highlight = tagger:FindFirstChild("TaggerHighlight")
-    if highlight then
-        highlight:Destroy()
+    if self.currentTaggerVFXHandleId then
+        ClientFX:Destroy(self.currentTaggerVFXHandleId)
+        self.currentTaggerVFXHandleId = nil
     end
 
     local RightArm = tagger:FindFirstChild("Right Arm") :: BasePart

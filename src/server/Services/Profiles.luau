@@ -10,12 +10,12 @@ export type ProfileData = {
         Equipped: {
             Abilities: string,
             Bombs: string,
-            Sounds: string,
+            Auras: string,
         },
         Owned: {
             Abilities: {string},
             Bombs: {string},
-            Sounds: {string},
+            Auras: {string},
         },
     },
 }
@@ -26,17 +26,17 @@ local PROFILE_TEMPLATE: ProfileData = {
         Equipped = {
             Abilities = "Default",
             Bombs = "Default",
-            Sounds = "Default",
+            Auras = "Default",
         },
         Owned = {
             Abilities = {"Default"},
             Bombs = {"Default"},
-            Sounds = {"Default"}
+            Auras = {"Default", "Green Fire"}
         }
     },
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_V4", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_V5", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 

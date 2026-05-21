@@ -7,8 +7,11 @@ local Items = {
             Rarity = "Cal",
         }
     },
-    Sounds = {
+    Auras = {
         Default = {
+            Rarity = "Common",
+        },
+        ["Green Fire"] = {
             Rarity = "Common",
         }
     },

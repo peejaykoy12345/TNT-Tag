@@ -1,9 +1,5 @@
-local Players = game:GetService("Players")
 local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Values = ReplicatedStorage.Values
-local GameStarted: BoolValue = Values.GameStarted
 
 local Profiles = require(ServerScriptService.Services.Profiles)
 

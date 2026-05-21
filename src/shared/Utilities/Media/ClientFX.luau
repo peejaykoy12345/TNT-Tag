@@ -18,6 +18,8 @@ export type argsType = {
     position: Vector3,
     rocks: boolean?,
     isBeam: boolean?,
+    offset: CFrame?,
+    weld: boolean?,
 }
 
 function ClientFX:GenerateId(): string

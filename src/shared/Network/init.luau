@@ -126,6 +126,7 @@ return {
 							offset = ByteNetMax.optional(ByteNetMax.cframe),
 							shake = ByteNetMax.optional(ByteNetMax.string),
 							rocks = ByteNetMax.optional(ByteNetMax.bool),
+                            weld = ByteNetMax.optional(ByteNetMax.bool),
 							position = ByteNetMax.optional(ByteNetMax.vec3),
 							isBeam = ByteNetMax.optional(ByteNetMax.bool),
 							caster = ByteNetMax.optional(ByteNetMax.inst),

@@ -28,6 +28,9 @@ local TabsFrame = InventoryMenu:WaitForChild("TabsFrame") :: Frame
 local InfoFrame = InventoryMenu:WaitForChild("InfoFrame") :: Frame
 local ContentFrame = InventoryMenu:WaitForChild("Content") :: Frame
 
+local HudGui = plr:WaitForChild("PlayerGui"):WaitForChild("HudGui")
+local InventoryButton = HudGui:WaitForChild("LeftContainer"):WaitForChild("HudButtonsFrame"):WaitForChild("RobuxShopButton") :: ImageButton
+
 local CONFIG = {
 	DEFAULT_TAB = "Bombs",
 }
@@ -160,6 +163,10 @@ function InventoryController:Init()
 			self:_UpdateContent(tabName, itemName, "Add")
 		end
 	end
+
+	InventoryButton.Activated:Connect(function()
+		InventoryMenu.Visible = not InventoryMenu.Visible
+	end)
 end
 
 function InventoryController:Start()
