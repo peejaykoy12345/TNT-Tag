@@ -11,6 +11,7 @@ local CONFIG = {
 	OffsetOff = Vector3.zero,
 	TweenInfo = TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 	RenderName = "ShiftLockAlign",
+	RotResponsiveness = 18, 
 }
 
 local ShiftLockController = {}
@@ -75,6 +76,9 @@ function ShiftLockController:Toggle()
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 		self:_TweenOffset(CONFIG.OffsetOn)
 		self:_StartRender()
+		if not self:_IsServerLocked() then
+			humanoid.AutoRotate = false
+		end
 	else
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		self:_TweenOffset(CONFIG.OffsetOff)

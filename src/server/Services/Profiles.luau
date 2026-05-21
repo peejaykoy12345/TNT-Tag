@@ -5,6 +5,7 @@ local ServerPackages = ServerScriptService.ServerPackages
 local ProfileStore = require(ServerPackages.ProfileStore)
 
 export type ProfileData = {
+	Gold: number,
 	Inventory: {
         Equipped: {
             Abilities: string,
@@ -16,10 +17,11 @@ export type ProfileData = {
             Bombs: {string},
             Sounds: {string},
         },
-    }
+    },
 }
 
 local PROFILE_TEMPLATE: ProfileData = {
+	Gold = 100,
 	Inventory = {
         Equipped = {
             Abilities = "Default",
@@ -31,7 +33,7 @@ local PROFILE_TEMPLATE: ProfileData = {
             Bombs = {"Default"},
             Sounds = {"Default"}
         }
-    }
+    },
 }
 
 local PlayerStore = ProfileStore.New("PlayerData_V4", PROFILE_TEMPLATE)
