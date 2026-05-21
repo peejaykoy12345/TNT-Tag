@@ -75,7 +75,7 @@ function actions.Render(data)
 end
 
 function ClientFXController:Init()
-	require(ReplicatedStorage.Modules.Utilities.Media.ForgeVFX).init()
+	require(ReplicatedStorage.Modules.Packages.ForgeVFX).init()
 end
 
 function ClientFXController:Start()
