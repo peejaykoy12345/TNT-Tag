@@ -267,7 +267,7 @@ function RoundService:_ExplodeBomb()
 
 				local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
 				if targetHum then
-					targetHum.Health = 0
+					targetHum.Health = -999
 				end
 
 				AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
