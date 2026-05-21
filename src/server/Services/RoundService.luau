@@ -74,6 +74,7 @@ function RoundService:_ApplyTaggerEffects(tagger: Model)
             vfx = Auras[equippedAura],
             parent = hrp,
             position = hrp.Position,
+            deletionTime = 999,
         }
     )
     ClientFX:Start(self.currentTaggerVFXHandleId, {

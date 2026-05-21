@@ -20,6 +20,7 @@ export type argsType = {
     isBeam: boolean?,
     offset: CFrame?,
     weld: boolean?,
+    deletionTime: number?,
 }
 
 function ClientFX:GenerateId(): string
