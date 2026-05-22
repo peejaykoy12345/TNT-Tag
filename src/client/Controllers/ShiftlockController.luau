@@ -11,7 +11,9 @@ local CONFIG = {
 	OffsetOff = Vector3.zero,
 	TweenInfo = TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 	RenderName = "ShiftLockAlign",
-	RotResponsiveness = 18, 
+	RotResponsiveness = 18,
+	CrosshairImage = "rbxasset://textures/MouseLockedCursor.png",
+	CrosshairSize = UDim2.fromOffset(32, 32),
 }
 
 local ShiftLockController = {}
@@ -20,6 +22,27 @@ local enabled = false
 local currentTween = nil
 local humanoid = nil
 local root = nil
+local crosshairGui = nil
+
+local function createCrosshairGui()
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "ShiftLockCrosshair"
+	screenGui.IgnoreGuiInset = true
+	screenGui.ResetOnSpawn = false
+	screenGui.DisplayOrder = 10
+
+	local crosshair = Instance.new("ImageLabel")
+	crosshair.Name = "Crosshair"
+	crosshair.Image = CONFIG.CrosshairImage
+	crosshair.Size = CONFIG.CrosshairSize
+	crosshair.AnchorPoint = Vector2.new(0.5, 0.5)
+	crosshair.Position = UDim2.fromScale(0.5, 0.5)
+	crosshair.BackgroundTransparency = 1
+	crosshair.Parent = screenGui
+
+	screenGui.Parent = plr.PlayerGui
+	return screenGui
+end
 
 function ShiftLockController:IsEnabled()
 	return enabled
@@ -54,12 +77,26 @@ function ShiftLockController:_StartRender()
 	end)
 end
 
+function ShiftLockController:_SetCrosshairVisible(visible)
+	if visible then
+		if not crosshairGui or not crosshairGui.Parent then
+			crosshairGui = createCrosshairGui()
+		end
+		crosshairGui.Enabled = true
+	else
+		if crosshairGui then
+			crosshairGui.Enabled = false
+		end
+	end
+end
+
 function ShiftLockController:_BindCharacter(character)
 	humanoid = character:WaitForChild("Humanoid")
 	root = character:WaitForChild("HumanoidRootPart")
 	if enabled then
 		self:_TweenOffset(CONFIG.OffsetOn)
 		self:_StartRender()
+		self:_SetCrosshairVisible(true)
 	end
 end
 
@@ -74,15 +111,19 @@ function ShiftLockController:Toggle()
 	enabled = not enabled
 	if enabled then
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+		UserInputService.MouseIconEnabled = false
 		self:_TweenOffset(CONFIG.OffsetOn)
 		self:_StartRender()
+		self:_SetCrosshairVisible(true)
 		if not self:_IsServerLocked() then
 			humanoid.AutoRotate = false
 		end
 	else
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		UserInputService.MouseIconEnabled = true
 		self:_TweenOffset(CONFIG.OffsetOff)
 		self:_StopRender()
+		self:_SetCrosshairVisible(false)
 		if not self:_IsServerLocked() then
 			humanoid.AutoRotate = true
 		end
