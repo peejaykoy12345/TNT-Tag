@@ -1,10 +1,15 @@
-local BugReporterService = game:GetService("BugReporterService")
 local ByteNetMax = require(script.ByteNetMax)
 
 return {
     General = ByteNetMax.defineNamespace("General", function()
         return {
-            packets = {},
+            packets = {
+                Notification = ByteNetMax.definePacket({
+                    value = ByteNetMax.struct({
+                        Message = ByteNetMax.string,
+                    })
+                }),
+            },
             queries = {},
         }
     end),
