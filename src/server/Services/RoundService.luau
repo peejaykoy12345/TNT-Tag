@@ -23,7 +23,9 @@ local VelocityUtilities = require(GeneralUtilities.VelocityUtils)
 local ClientFX = require(Utilities.Media.ClientFX)
 
 local Network = require(Modules.Network)
+local GeneralPackets = Network.General.packets
 local ReplicationPackets = Network.Replication.packets
+local NotificationPacket = GeneralPackets.Notification
 local InitializePacket = ReplicationPackets.Initialize
 local UnreliableUpdatePacket = ReplicationPackets.UnreliableUpdate
 local UpdatePacket = ReplicationPackets.Update
@@ -154,7 +156,6 @@ function RoundService:_CleanupRound()
     end
 
     local runners = workspace.Runners:GetChildren()
-    -- print("Runners: ", runners)
 
     for _, char in ipairs(runners) do
         self:_RemoveTaggerEffects(char)
@@ -165,12 +166,11 @@ function RoundService:_CleanupRound()
             hum.WalkSpeed = 16
         end
 
-        -- print(char.Name, " is a runner")
-
         char.Parent = workspace
         char:PivotTo(MapMarkers.Spawn.CFrame)
     end
 
+    self.lastBombHolder = nil
     GameStarted.Value = false
 end
 
@@ -230,6 +230,8 @@ function RoundService:_InitializeTagging(tagger: Model)
             tagger:SetAttribute("Tagger", nil)
             runner:SetAttribute("Tagger", true)
 
+            self.lastBombHolder = tagger
+
             self:_InitializeTagging(runner)
             return
         end
@@ -244,6 +246,12 @@ function RoundService:_ExplodeBomb()
 
 	for _, runner in ipairs(workspace.Runners:GetChildren()) do
 		if not runner:GetAttribute("Tagger") then continue end
+
+        local plr = Players:GetPlayerFromCharacter(runner)
+        if not plr then
+            warn(`Player not found for {runner.Name}`)
+            continue
+        end
 
 		local hrp = runner:FindFirstChild("HumanoidRootPart")
 		if not hrp then continue end
@@ -277,6 +285,10 @@ function RoundService:_ExplodeBomb()
                         targetHum:TakeDamage(targetHum.Health)
                     end)
 				end
+
+                local message = "You killed " .. hitChar.Name
+
+                NotificationPacket.sendTo({Message = message}, plr)
 			end
 		end)
 
@@ -298,6 +310,14 @@ function RoundService:_ExplodeBomb()
 					task.delay(0.5, function()
 						runner:SetAttribute("Exploding", nil)
 					end)
+				end
+
+				if self.lastBombHolder then
+					local lastBombHolderPlr = Players:GetPlayerFromCharacter(self.lastBombHolder)
+					if lastBombHolderPlr then
+						local message = "You killed " .. runner.Name
+						NotificationPacket.sendTo({Message = message}, lastBombHolderPlr)
+					end
 				end
 			end
 
