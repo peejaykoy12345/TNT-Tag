@@ -284,16 +284,17 @@ function RoundService:_ExplodeBomb()
 
 				task.delay(CONFIG.RAGDOLL_DURATION, function()
 					hitChar:PivotTo(MapMarkers.Spawn.CFrame)
+					self:_OnRunnerDied(hitChar)
 				end)
 
-				local message = "You killed " .. hitChar.Name
-				NotificationPacket.sendTo({Message = message}, plr)
+				NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
 			end
 		end)
 
 		task.delay(0.2, function()
 			stopped = true
 			hb:Destroy()
+
 			if not hitSomething then
 				AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
 				VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
@@ -301,25 +302,18 @@ function RoundService:_ExplodeBomb()
 				runner:SetAttribute("Exploding", true)
 
 				task.delay(CONFIG.RAGDOLL_DURATION, function()
-					runner:PivotTo(MapMarkers.Spawn.CFrame)
-				end)
-
-				task.delay(0.5, function()
 					runner:SetAttribute("Exploding", nil)
+					runner:PivotTo(MapMarkers.Spawn.CFrame)
+					self:_OnRunnerDied(runner)
 				end)
 
 				if self.lastBombHolder then
 					local lastBombHolderPlr = Players:GetPlayerFromCharacter(self.lastBombHolder)
 					if lastBombHolderPlr then
-						local message = "You killed " .. runner.Name
-						NotificationPacket.sendTo({Message = message}, lastBombHolderPlr)
+						NotificationPacket.sendTo({Message = "You killed " .. runner.Name}, lastBombHolderPlr)
 					end
 				end
 			end
-
-			task.defer(function()
-				self:_CheckRoundEnd()
-			end)
 		end)
 
 		self:_RemoveTaggerEffects(runner)
@@ -353,15 +347,6 @@ function RoundService:_StartRoundTimer()
 
         if i == 0 then
             self:_ExplodeBomb()
-
-            if self:_CheckRoundEnd() then return end
-
-            local tagger = self:_SelectRandomTagger()
-            if tagger then
-                self:_InitializeTagging(tagger)
-            end
-
-            self:_StartRoundTimer()
             return
         end
 
@@ -420,18 +405,8 @@ function RoundService:_StartIntermission()
     end
 end
 
-function RoundService:_SetupRunnersListener()
-    workspace.Runners.ChildRemoved:Connect(function()
-        if not GameStarted.Value then return end
-        task.defer(function()
-            self:_CheckRoundEnd()
-        end)
-    end)
-end
-
 function RoundService:Start()
     self:_SetupInitializeHandlers()
-    self:_SetupRunnersListener()
     self:_StartIntermission()
 end
 
