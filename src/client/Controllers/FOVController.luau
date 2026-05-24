@@ -3,9 +3,6 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 
-local Values = ReplicatedStorage.Values
-local GameStarted: BoolValue = Values.GameStarted
-
 local plr = Players.LocalPlayer
 
 local CONFIG = {
@@ -24,8 +21,6 @@ function FOVController:Init()
         local char = plr.Character
         if not char then return end
 
-        local gameStarted = GameStarted.Value
-
         local cam = workspace.CurrentCamera
 
         local humanoid = char:FindFirstChildOfClass("Humanoid") :: Humanoid
@@ -33,10 +28,10 @@ function FOVController:Init()
 
         local isMoving = humanoid.MoveDirection.Magnitude > 0
 
-        if isMoving and gameStarted and not isFOVActive then
+        if isMoving and not isFOVActive then
             isFOVActive = true
             TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.SPRINT_FOV}):Play()
-        elseif (not isMoving or not gameStarted) and isFOVActive then
+        elseif not isMoving and isFOVActive then
             isFOVActive = false
             TweenService:Create(cam, TweenInfo.new(CONFIG.TWEEN_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = CONFIG.DEFAULT_FOV}):Play()
         end
