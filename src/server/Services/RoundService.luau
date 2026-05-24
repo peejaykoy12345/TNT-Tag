@@ -32,10 +32,10 @@ local UpdatePacket = ReplicationPackets.Update
 
 local CONFIG = {
     INTERMISSION_TIME = 15,
-    ROUND_TIME = 10,
+    ROUND_TIME = 15,
     DISTANCE_NEEDED_TO_TAG = 10,
     TAG_COOLDOWN = 1,
-    TAGGER_WALKSPEED = 28,
+    TAGGER_WALKSPEED = 32,
     RUNNER_WALKSPEED = 26,
     HITBOX = {
         SIZE = Vector3.new(15, 15, 15)
