@@ -211,6 +211,20 @@ function RoundService:_SelectRandomTagger()
     return tagger
 end
 
+function RoundService:_TrySelectAndStartTagger()
+    local tagger = self:_SelectRandomTagger()
+    if tagger then
+        self:_SendRunnersLeft()
+        self:_InitializeTagging(tagger)
+        self:_StartRoundTimer()
+        return true
+    end
+
+    self:_CleanupRound()
+    self:_StartIntermission()
+    return false
+end
+
 function RoundService:_InitializeTagging(tagger: Model)
     if self.currentConnection then
         self.currentConnection:Disconnect()
@@ -331,14 +345,8 @@ function RoundService:_ExplodeBomb()
             end
         end
 
-        self:_SendRunnersLeft()
-
         if not self:_CheckRoundEnd() then
-            local tagger = self:_SelectRandomTagger()
-            if tagger then
-                self:_InitializeTagging(tagger)
-                self:_StartRoundTimer()
-            end
+            self:_TrySelectAndStartTagger()
         end
     end)
 
@@ -401,13 +409,7 @@ function RoundService:_StartRound()
         end
     end
 
-    self:_SendRunnersLeft()
-
-    local tagger = self:_SelectRandomTagger()
-    if tagger then
-        self:_InitializeTagging(tagger)
-        self:_StartRoundTimer()
-    end
+    self:_TrySelectAndStartTagger()
 end
 
 function RoundService:_StartIntermission()
@@ -450,13 +452,8 @@ function RoundService:_OnPlayerRemoving(plr: Player)
 
             char.Parent = workspace
 
-            self:_SendRunnersLeft()
-
             if not self:_CheckRoundEnd() then
-                local tagger = self:_SelectRandomTagger()
-                if tagger then
-                    self:_InitializeTagging(tagger)
-                end
+                self:_TrySelectAndStartTagger()
             end
         else
             char.Parent = workspace
