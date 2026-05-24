@@ -6,6 +6,7 @@ local ProfileStore = require(ServerPackages.ProfileStore)
 
 export type ProfileData = {
 	Gold: number,
+	Tags: number,
 	Inventory: {
         Equipped: {
             Abilities: string,
@@ -22,6 +23,7 @@ export type ProfileData = {
 
 local PROFILE_TEMPLATE: ProfileData = {
 	Gold = 100,
+	Tags = 0,
 	Inventory = {
         Equipped = {
             Abilities = "Default",
@@ -101,13 +103,22 @@ end
 function module:GetData(plr: Player, dataName: string): any
 	local profile = module:GetProfile(plr)
 	if not profile then return nil end
+
 	return profile.Data[dataName]
 end
 
 function module:SetData(plr: Player, dataName: string, value: any)
-	local profile = Profiles[plr]
+	local profile = module:GetProfile(plr)
 	if not profile then return end
+
 	profile.Data[dataName] = value
+end
+
+function module:IncrementData(plr: Player, dataName: string, value: number)
+	local profile = module:GetProfile(plr)
+	if not profile then return end
+
+	profile.Data[dataName] += value
 end
 
 return module
