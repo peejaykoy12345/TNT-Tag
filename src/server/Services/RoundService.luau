@@ -48,6 +48,11 @@ local CONFIG = {
 }
 
 local RoundService = {}
+RoundService.tagger = nil
+RoundService.lastBombHolder = nil
+RoundService.currentConnection = nil
+RoundService.currentTaggerVFXHandleId = nil
+RoundService.lastTagTime = 0
 
 function RoundService:_ApplyTaggerEffects(tagger: Model)
     local RightArm = tagger:FindFirstChild("Right Arm") :: BasePart
@@ -145,10 +150,8 @@ function RoundService:_SetupInitializeHandlers()
         if name == "RunnersLeft" then
             UpdatePacket.sendTo({Name = "RunnersLeft", Value = {uint8 = #workspace.Runners:GetChildren() - 1}}, plr)
         elseif name == "Tagger" then
-            for _, runner in ipairs(workspace.Runners:GetChildren()) do
-                if not runner:GetAttribute("Tagger") then continue end
-                UpdatePacket.sendTo({Name = "Tagger", Value = {string = runner.Name}}, plr)
-                break
+            if self.tagger then
+                UpdatePacket.sendTo({Name = "Tagger", Value = {string = self.tagger.Name}}, plr)
             end
         end
     end)
@@ -175,6 +178,7 @@ function RoundService:_CleanupRound()
         char:PivotTo(MapMarkers.Spawn.CFrame)
     end
 
+    self.tagger = nil
     self.lastBombHolder = nil
     GameStarted.Value = false
 end
@@ -192,14 +196,18 @@ end
 
 function RoundService:_SelectRandomTagger()
     local runners = workspace.Runners:GetChildren()
-    if #runners == 0 then return nil end
+    if #runners == 0 then
+        self.tagger = nil
+        return nil
+    end
 
-    for _, runner in ipairs(runners) do
-        runner:SetAttribute("Tagger", nil)
+    if self.tagger then
+        self.tagger:SetAttribute("Tagger", nil)
     end
 
     local tagger = runners[math.random(1, #runners)]
     tagger:SetAttribute("Tagger", true)
+    self.tagger = tagger
     return tagger
 end
 
@@ -209,6 +217,7 @@ function RoundService:_InitializeTagging(tagger: Model)
         self.currentConnection = nil
     end
 
+    self.tagger = tagger
     self:_ApplyTaggerEffects(tagger)
     self:_ApplyTaggerStats(tagger)
     self:_SendTagger(tagger)
@@ -217,7 +226,7 @@ function RoundService:_InitializeTagging(tagger: Model)
         local hrp = tagger:FindFirstChild("HumanoidRootPart") :: BasePart
         if not hrp then return end
 
-        if (os.clock() - (self.lastTagTime or 0)) < CONFIG.TAG_COOLDOWN then return end
+        if (os.clock() - self.lastTagTime) < CONFIG.TAG_COOLDOWN then return end
 
         for _, runner in ipairs(workspace.Runners:GetChildren()) do
             if runner == tagger then continue end
@@ -244,104 +253,116 @@ function RoundService:_InitializeTagging(tagger: Model)
 end
 
 function RoundService:_ExplodeBomb()
-	if self.currentConnection then
-		self.currentConnection:Disconnect()
-		self.currentConnection = nil
-	end
+    if self.currentConnection then
+        self.currentConnection:Disconnect()
+        self.currentConnection = nil
+    end
 
-	for _, runner in ipairs(workspace.Runners:GetChildren()) do
-		if not runner:GetAttribute("Tagger") then continue end
+    local runner = self.tagger
+    if not runner then return end
 
-		local plr = Players:GetPlayerFromCharacter(runner)
-		if not plr then
-			warn(`Player not found for {runner.Name}`)
-			continue
-		end
+    local plr = Players:GetPlayerFromCharacter(runner)
+    if not plr then
+        warn(`Player not found for {runner.Name}`)
+        return
+    end
 
-		local hrp = runner:FindFirstChild("HumanoidRootPart")
-		if not hrp then continue end
+    local hrp = runner:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
-		local origin = hrp.CFrame
+    local origin = hrp.CFrame
 
-		local hb = AbilityUtilities:CreateHitbox({
-			SizeOrPart = CONFIG.HITBOX.SIZE,
-			CFrame = origin
-		})
-		hb:Start()
+    local hb = AbilityUtilities:CreateHitbox({
+        SizeOrPart = CONFIG.HITBOX.SIZE,
+        CFrame = origin
+    })
+    hb:Start()
 
-		local hitSomething = false
-		local stopped = false
+    local hitSomething = false
+    local stopped = false
 
-		hb.HitSomeone:Connect(function(hitChars)
-			for _, hitChar in ipairs(hitChars) do
-				if stopped then return end
-				if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
+    hb.HitSomeone:Connect(function(hitChars)
+        for _, hitChar in ipairs(hitChars) do
+            if stopped then return end
+            if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
 
-				if not hitSomething then
-					AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
-					VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
-				end
+            if not hitSomething then
+                AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+                VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+                task.delay(CONFIG.RAGDOLL_DURATION, function()
+                    runner:PivotTo(MapMarkers.Spawn.CFrame)
+                end)
+            end
 
-				hitSomething = true
+            hitSomething = true
 
-				AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
-				VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+            hitChar.Parent = workspace
 
-				task.delay(CONFIG.RAGDOLL_DURATION, function()
-					hitChar:PivotTo(MapMarkers.Spawn.CFrame)
-					self:_OnRunnerDied(hitChar)
-				end)
+            AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
+            VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
-				NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
-			end
-		end)
+            task.delay(CONFIG.RAGDOLL_DURATION, function()
+                hitChar:PivotTo(MapMarkers.Spawn.CFrame)
+            end)
 
-		task.delay(0.2, function()
-			stopped = true
-			hb:Destroy()
+            NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
+        end
+    end)
 
-			if not hitSomething then
-				AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
-				VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+    task.delay(0.2, function()
+        stopped = true
+        hb:Destroy()
 
-				runner:SetAttribute("Exploding", true)
+        if not GameStarted.Value then return end
 
-				task.delay(CONFIG.RAGDOLL_DURATION, function()
-					runner:SetAttribute("Exploding", nil)
-					runner:PivotTo(MapMarkers.Spawn.CFrame)
-					self:_OnRunnerDied(runner)
-				end)
+        if not hitSomething then
+            AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+            VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
-				if self.lastBombHolder then
-					local lastBombHolderPlr = Players:GetPlayerFromCharacter(self.lastBombHolder)
-					if lastBombHolderPlr then
-						NotificationPacket.sendTo({Message = "You killed " .. runner.Name}, lastBombHolderPlr)
-					end
-				end
-			end
-		end)
+            task.delay(CONFIG.RAGDOLL_DURATION, function()
+                runner:PivotTo(MapMarkers.Spawn.CFrame)
+            end)
 
-		self:_RemoveTaggerEffects(runner)
-		runner:SetAttribute("Tagger", nil)
-		break
-	end
+            if self.lastBombHolder then
+                local lastBombHolderPlr = Players:GetPlayerFromCharacter(self.lastBombHolder)
+                if lastBombHolderPlr then
+                    NotificationPacket.sendTo({Message = "You killed " .. runner.Name}, lastBombHolderPlr)
+                end
+            end
+        end
+
+        self:_SendRunnersLeft()
+
+        if not self:_CheckRoundEnd() then
+            local tagger = self:_SelectRandomTagger()
+            if tagger then
+                self:_InitializeTagging(tagger)
+                self:_StartRoundTimer()
+            end
+        end
+    end)
+
+    self:_RemoveTaggerEffects(runner)
+    runner:SetAttribute("Tagger", nil)
+    runner.Parent = workspace
+    self.tagger = nil
 end
 
 function RoundService:_OnRunnerDied(char: Model)
-	if not GameStarted.Value then return end
-	if char:GetAttribute("Exploding") then return end
+    if not GameStarted.Value then return end
+    if char:GetAttribute("Exploding") then return end
 
-	self:_RemoveTaggerEffects(char)
-	char:SetAttribute("Tagger", nil)
-	char.Parent = workspace
+    self:_RemoveTaggerEffects(char)
+    char:SetAttribute("Tagger", nil)
+    char.Parent = workspace
 
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
-	end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
+    end
 
-	self:_SendRunnersLeft()
-	self:_CheckRoundEnd()
+    self:_SendRunnersLeft()
+    self:_CheckRoundEnd()
 end
 
 function RoundService:_StartRoundTimer()
@@ -410,6 +431,41 @@ function RoundService:_StartIntermission()
     end
 end
 
+function RoundService:_OnPlayerRemoving(plr: Player)
+    local char = plr.Character
+    if not char then return end
+
+    if not GameStarted.Value then return end
+
+    if char.Parent == workspace.Runners then
+        if self.tagger == char then
+            self:_RemoveTaggerEffects(char)
+            char:SetAttribute("Tagger", nil)
+            self.tagger = nil
+
+            if self.currentConnection then
+                self.currentConnection:Disconnect()
+                self.currentConnection = nil
+            end
+
+            char.Parent = workspace
+
+            self:_SendRunnersLeft()
+
+            if not self:_CheckRoundEnd() then
+                local tagger = self:_SelectRandomTagger()
+                if tagger then
+                    self:_InitializeTagging(tagger)
+                end
+            end
+        else
+            char.Parent = workspace
+            self:_SendRunnersLeft()
+            self:_CheckRoundEnd()
+        end
+    end
+end
+
 function RoundService:Start()
     self:_SetupInitializeHandlers()
     self:_StartIntermission()
@@ -427,6 +483,9 @@ function RoundService:Start()
     end
 
     Players.PlayerAdded:Connect(onPlayerAdded)
+    Players.PlayerRemoving:Connect(function(plr)
+        self:_OnPlayerRemoving(plr)
+    end)
 end
 
 return RoundService
