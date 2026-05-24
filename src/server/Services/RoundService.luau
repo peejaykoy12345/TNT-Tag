@@ -12,7 +12,10 @@ local Auras = Assets.Auras
 local Values = ReplicatedStorage.Values
 local GameStarted: BoolValue = Values.GameStarted
 
-local InventoryService = require(ServerScriptService.Services.InventoryService)
+local Services = ServerScriptService.Services
+local Profiles = require(Services.Profiles)
+local LeaderboardService = require(Services.LeaderboardService)
+local InventoryService = require(Services.InventoryService)
 
 local Modules = ReplicatedStorage.Modules
 local Utilities = Modules.Utilities
@@ -261,6 +264,12 @@ function RoundService:_InitializeTagging(tagger: Model)
 
             self.lastBombHolder = tagger
 
+            local taggerPlr = Players:GetPlayerFromCharacter(tagger)
+            if taggerPlr then
+                Profiles:IncrementData(taggerPlr, "Tags", 1)
+                LeaderboardService:NotifyUpdate(taggerPlr)
+            end
+
             self:_InitializeTagging(runner)
             return
         end
@@ -469,8 +478,10 @@ function RoundService:_OnPlayerRemoving(plr: Player)
 end
 
 function RoundService:Start()
-    self:_SetupInitializeHandlers()
-    self:_StartIntermission()
+    task.spawn(function()
+        self:_SetupInitializeHandlers()
+        self:_StartIntermission()
+    end)
 
     local function onPlayerAdded(plr)
         plr.CharacterAdded:Connect(function(char)

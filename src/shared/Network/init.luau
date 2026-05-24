@@ -89,6 +89,39 @@ return {
             queries = {},
         }
     end),
+    Leaderboard = ByteNetMax.defineNamespace("Leaderboard", function()
+        return {
+            packets = {
+                LeaderboardUpdate = ByteNetMax.definePacket({
+                    value = ByteNetMax.struct({
+                        rank = ByteNetMax.uint8,
+                        userId = ByteNetMax.float64,
+                        value = ByteNetMax.uint32,
+                        username = ByteNetMax.string,
+                    })
+                }),
+            },
+            queries = {
+                GetLeaderboardData = ByteNetMax.defineQuery({
+                    request = ByteNetMax.struct({}),
+                    response = ByteNetMax.struct({
+                        entries = ByteNetMax.array(ByteNetMax.struct({
+                            rank = ByteNetMax.uint8,
+                            userId = ByteNetMax.float64,
+                            value = ByteNetMax.uint32,
+                            username = ByteNetMax.string,
+                        })),
+                        playerEntry = ByteNetMax.struct({
+                            rank = ByteNetMax.uint32,
+                            userId = ByteNetMax.float64,
+                            value = ByteNetMax.uint32,
+                            username = ByteNetMax.string,
+                        }),
+                    })
+                })
+            },
+        }
+    end),
     SFX = ByteNetMax.defineNamespace("SFX", function()
 		return {
 			packets = {
