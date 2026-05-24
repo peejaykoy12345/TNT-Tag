@@ -65,7 +65,12 @@ function RoundService:_ApplyTaggerEffects(tagger: Model)
 
     local equippedAura = InventoryService:GetEquippedItem(plr, "Auras")
     local equippedBomb = InventoryService:GetEquippedItem(plr, "Bombs")
-    if not equippedAura or not equippedBomb then return end
+    if not equippedAura then
+        equippedAura = "Default"
+    end
+    if not equippedBomb then
+        equippedBomb = "Default"
+    end
 
     self.currentTaggerVFXHandleId = ClientFX:Construct(
         {
@@ -163,7 +168,7 @@ function RoundService:_CleanupRound()
 
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then
-            hum.WalkSpeed = 16
+            hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
         end
 
         char.Parent = workspace
@@ -332,7 +337,7 @@ function RoundService:_OnRunnerDied(char: Model)
 
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if hum then
-		hum.WalkSpeed = 16
+		hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
 	end
 
 	self:_SendRunnersLeft()
@@ -408,6 +413,20 @@ end
 function RoundService:Start()
     self:_SetupInitializeHandlers()
     self:_StartIntermission()
+
+    local function onPlayerAdded(plr)
+        plr.CharacterAdded:Connect(function(char)
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
+        end)
+    end
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        onPlayerAdded(plr)
+    end
+
+    Players.PlayerAdded:Connect(onPlayerAdded)
 end
 
 return RoundService
