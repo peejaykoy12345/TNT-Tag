@@ -44,7 +44,7 @@ local CONFIG = {
         POWER = 80,
         DURATION = .5
     },
-    RAGDOLL_DURATION = 1,
+    RAGDOLL_DURATION = 3,
 }
 
 local RoundService = {}
@@ -247,11 +247,11 @@ function RoundService:_ExplodeBomb()
 	for _, runner in ipairs(workspace.Runners:GetChildren()) do
 		if not runner:GetAttribute("Tagger") then continue end
 
-        local plr = Players:GetPlayerFromCharacter(runner)
-        if not plr then
-            warn(`Player not found for {runner.Name}`)
-            continue
-        end
+		local plr = Players:GetPlayerFromCharacter(runner)
+		if not plr then
+			warn(`Player not found for {runner.Name}`)
+			continue
+		end
 
 		local hrp = runner:FindFirstChild("HumanoidRootPart")
 		if not hrp then continue end
@@ -279,16 +279,15 @@ function RoundService:_ExplodeBomb()
 
 				hitSomething = true
 
-				local targetHum = hitChar:FindFirstChildOfClass("Humanoid")
-				if targetHum then
-                    task.delay(CONFIG.RAGDOLL_DURATION, function()
-                        targetHum:TakeDamage(targetHum.Health)
-                    end)
-				end
+				AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
+				VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
-                local message = "You killed " .. hitChar.Name
+				task.delay(CONFIG.RAGDOLL_DURATION, function()
+					hitChar:PivotTo(MapMarkers.Spawn.CFrame)
+				end)
 
-                NotificationPacket.sendTo({Message = message}, plr)
+				local message = "You killed " .. hitChar.Name
+				NotificationPacket.sendTo({Message = message}, plr)
 			end
 		end)
 
@@ -296,21 +295,18 @@ function RoundService:_ExplodeBomb()
 			stopped = true
 			hb:Destroy()
 			if not hitSomething then
-                AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
+				AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
 				VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
-				local humanoid = runner:FindFirstChildOfClass("Humanoid")
-				if humanoid then
-					runner:SetAttribute("Exploding", true)
-					
-                    task.delay(CONFIG.RAGDOLL_DURATION, function()
-                        humanoid:TakeDamage(humanoid.Health)
-                    end)
+				runner:SetAttribute("Exploding", true)
 
-					task.delay(0.5, function()
-						runner:SetAttribute("Exploding", nil)
-					end)
-				end
+				task.delay(CONFIG.RAGDOLL_DURATION, function()
+					runner:PivotTo(MapMarkers.Spawn.CFrame)
+				end)
+
+				task.delay(0.5, function()
+					runner:SetAttribute("Exploding", nil)
+				end)
 
 				if self.lastBombHolder then
 					local lastBombHolderPlr = Players:GetPlayerFromCharacter(self.lastBombHolder)
@@ -321,9 +317,9 @@ function RoundService:_ExplodeBomb()
 				end
 			end
 
-            task.defer(function()
-                self:_CheckRoundEnd()
-            end)
+			task.defer(function()
+				self:_CheckRoundEnd()
+			end)
 		end)
 
 		self:_RemoveTaggerEffects(runner)
