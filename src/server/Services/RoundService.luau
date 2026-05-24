@@ -48,6 +48,7 @@ local CONFIG = {
 }
 
 local RoundService = {}
+RoundService.timerVersion = 0
 RoundService.tagger = nil
 RoundService.lastBombHolder = nil
 RoundService.currentConnection = nil
@@ -374,8 +375,12 @@ function RoundService:_OnRunnerDied(char: Model)
 end
 
 function RoundService:_StartRoundTimer()
+    self.timerVersion += 1
+    local myVersion = self.timerVersion
+
     for i = CONFIG.ROUND_TIME, 0, -1 do
         if not GameStarted.Value then return end
+        if self.timerVersion ~= myVersion then return end
 
         UnreliableUpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
 
