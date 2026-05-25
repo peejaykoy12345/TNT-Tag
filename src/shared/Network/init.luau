@@ -198,6 +198,12 @@ return {
 				RoundResults = ByteNetMax.definePacket({
 					value = ByteNetMax.map(ByteNetMax.string, ByteNetMax.uint8)
 				}),
+				SurviveLeaderboard = ByteNetMax.definePacket({
+					value = ByteNetMax.array(ByteNetMax.struct({
+						name = ByteNetMax.string,
+						time = ByteNetMax.uint16,
+					}))
+				}),
 			},
 			queries = {},
 		}

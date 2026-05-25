@@ -1,4 +1,8 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+
+local Network = require(ReplicatedStorage.Modules.Network)
+local SurviveLeaderboardPacket = Network.Misc.packets.SurviveLeaderboard
 
 local SurviveLeaderboard = {}
 
@@ -15,18 +19,11 @@ end
 function SurviveLeaderboard:_Broadcast()
     local results: {{name: string, time: number}} = {}
     for name, time in pairs(survivalTimes) do
-        table.insert(results, {name = name, time = time})
+        table.insert(results, {name = name, time = math.floor(time)})
     end
     table.sort(results, function(a, b) return a.time > b.time end)
 
-    local lines = {"===== Survival Leaderboard ====="}
-    for rank, entry in ipairs(results) do
-        table.insert(lines, string.format("#%d  %-20s  %s", rank, entry.name, self:_FormatTime(entry.time)))
-    end
-    table.insert(lines, "================================")
-
-    local message = table.concat(lines, "\n")
-    print(message)
+    SurviveLeaderboardPacket.sendToAll(results)
 end
 
 function SurviveLeaderboard:StartRound()
