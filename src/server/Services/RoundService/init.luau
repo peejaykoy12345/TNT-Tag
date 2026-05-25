@@ -59,6 +59,7 @@ RoundService.lastBombHolder = nil
 RoundService.currentConnection = nil
 RoundService.currentTaggerVFXHandleId = nil
 RoundService.lastTagTime = 0
+RoundService.diedConnections = {}
 
 function RoundService:_ApplyTaggerEffects(tagger: Model)
     local RightArm = tagger:FindFirstChild("Right Arm") :: BasePart
@@ -169,6 +170,11 @@ function RoundService:_CleanupRound()
         self.currentConnection = nil
     end
 
+    for char, conn in self.diedConnections do
+        conn:Disconnect()
+    end
+    self.diedConnections = {}
+
     local runners = workspace.Runners:GetChildren()
 
     for _, char in ipairs(runners) do
@@ -272,7 +278,6 @@ function RoundService:_InitializeTagging(tagger: Model)
             if taggerPlr then
                 task.spawn(function()
                     NotificationPacket.sendTo({Message = "You tagged " .. runner.Name}, taggerPlr)
-
                     Profiles:IncrementData(taggerPlr, "Tags", 1)
                     LeaderboardService:NotifyUpdate(taggerPlr, "Tags")
                 end)
@@ -439,9 +444,13 @@ function RoundService:_StartRound()
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.WalkSpeed = CONFIG.RUNNER_WALKSPEED
-            humanoid.Died:Once(function()
+            local conn
+            conn = humanoid.Died:Connect(function()
+                conn:Disconnect()
+                self.diedConnections[char] = nil
                 self:_OnRunnerDied(char)
             end)
+            self.diedConnections[char] = conn
         end
     end
 
