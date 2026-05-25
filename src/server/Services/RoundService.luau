@@ -407,6 +407,8 @@ function RoundService:_StartRoundTimer()
 
         UnreliableUpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
 
+        if self:_CheckRoundEnd() then return end
+
         if i == 0 then
             self:_ExplodeBomb()
             return
