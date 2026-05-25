@@ -8,42 +8,42 @@ local ReplicationPackets = Network.Replication.packets
 local InitializePacket = ReplicationPackets.Initialize
 local UpdatePacket = ReplicationPackets.Update
 
-local GoldService = {}
+local CoinService = {}
 
-function GoldService:Init()
+function CoinService:Init()
     InitializePacket.listen(function(data, plr)
-        if data.Name ~= "Gold" then return end
+        if data.Name ~= "Coins" then return end
 
-        local gold = Profiles:GetData(plr, "Gold")
-        if not gold then return end
+        local coin = Profiles:GetData(plr, "Coins")
+        if not coin then return end
 
         UpdatePacket.sendTo({
-            Name = "Gold",
+            Name = "Coins",
             Value = {
-                uint32 = gold
+                uint32 = coin
             },
         }, plr)
     end)
 end
 
-function GoldService:GiveGold(plr: Player, amountToBeGiven: number)
+function CoinService:GiveCoin(plr: Player, amountToBeGiven: number)
     local profile = Profiles:GetProfile(plr)
     if not profile then return end
 
-    profile.Data.Gold += amountToBeGiven
+    profile.Data.Coins += amountToBeGiven
     UpdatePacket.sendTo({
-        Name = "Gold",
+        Name = "Coins",
         Value = {
-            uint32 = profile.Data.Gold,
+            uint32 = profile.Data.Coins,
         },
     }, plr)
 end
 
-function GoldService:CanAfford(plr: Player, price: number): boolean
-    local gold = Profiles:GetData(plr, "Gold")
-    if not gold then return false end
+function CoinService:CanAfford(plr: Player, price: number): boolean
+    local coin = Profiles:GetData(plr, "Coins")
+    if not coin then return false end
 
-    return gold >= price
+    return coin >= price
 end
 
-return GoldService
+return CoinService

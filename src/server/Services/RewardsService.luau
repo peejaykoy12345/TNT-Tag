@@ -9,7 +9,7 @@ local NotificationPacket = Network.General.packets.Notification
 
 local CONFIG = {
     GROUP_ID = 769410750,
-    GOLD_TO_BE_GIVEN_FOR_GROUP_REWARD = 100,
+    COIN_TO_BE_GIVEN_FOR_GROUP_REWARD = 100,
 }
 
 local RewardsService = {}
@@ -29,12 +29,12 @@ function RewardsService:Init()
             return 
         end
 
-        profile.Data.Gold += CONFIG.GOLD_TO_BE_GIVEN_FOR_GROUP_REWARD
+        profile.Data.Coins += CONFIG.COIN_TO_BE_GIVEN_FOR_GROUP_REWARD
         profile.Data.Flags.ClaimedFreeGroupReward = true
 
         NotificationPacket.sendTo({Message = "Successfully claimed reward"}, plr)
         
-        Network.Replication.packets.Update.sendTo({Name = "Gold", Value = {uint32 = profile.Data.Gold}}, plr)
+        Network.Replication.packets.Update.sendTo({Name = "Coins", Value = {uint32 = profile.Data.Coins}}, plr)
     end)
 end
 

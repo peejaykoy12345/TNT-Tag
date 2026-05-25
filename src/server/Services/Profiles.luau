@@ -5,7 +5,7 @@ local ServerPackages = ServerScriptService.ServerPackages
 local ProfileStore = require(ServerPackages.ProfileStore)
 
 export type ProfileData = {
-	Gold: number,
+	Coins: number,
 	Tags: number,
 	RoundSurvives: number,
 	Flags: {
@@ -26,7 +26,7 @@ export type ProfileData = {
 }
 
 local PROFILE_TEMPLATE: ProfileData = {
-	Gold = 100,
+	Coins = 100,
 	Tags = 0,
 	RoundSurvives = 0,
 	Flags = {
@@ -46,7 +46,7 @@ local PROFILE_TEMPLATE: ProfileData = {
     },
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_V5", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_V6", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 

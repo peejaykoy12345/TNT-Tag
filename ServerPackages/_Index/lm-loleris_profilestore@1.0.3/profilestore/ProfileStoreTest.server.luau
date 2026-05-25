@@ -188,11 +188,11 @@ task.spawn(function()
 		local key = "Versioning"
 
 		local profile = Store1:StartSessionAsync(key)
-		profile.Data.Gold = 10
+		profile.Data.Coins = 10
 		profile:EndSession()
 
 		local payload = Store1:GetAsync(key)
-		payload.Data.Gold += 10
+		payload.Data.Coins += 10
 		payload:SetAsync()
 
 		local query = Store1:VersionQuery(
@@ -204,7 +204,7 @@ task.spawn(function()
 		
 		local result = query:NextAsync()
 		
-		local is_pass = result and result.Data.Gold == 20 or false
+		local is_pass = result and result.Data.Coins == 20 or false
 		
 		Store1:RemoveAsync(key)
 		
