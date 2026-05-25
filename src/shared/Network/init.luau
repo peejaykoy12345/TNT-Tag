@@ -195,6 +195,9 @@ return {
 				ClaimFreeGroupReward = ByteNetMax.definePacket({
 					value = ByteNetMax.struct({})
 				}),
+				RoundResults = ByteNetMax.definePacket({
+					value = ByteNetMax.map(ByteNetMax.string, ByteNetMax.uint8)
+				}),
 			},
 			queries = {},
 		}

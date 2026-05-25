@@ -388,7 +388,7 @@ function RoundService:_ExplodeBomb()
             local survivorPlr = Players:GetPlayerFromCharacter(survivorChar)
             if not survivorPlr then continue end
             Profiles:IncrementData(survivorPlr, "RoundSurvives", 1)
-            Stats:Add(survivorPlr, "RoundSurvives", 1)
+            Stats:Add(survivorPlr, "Round Survives", 1)
 
             task.spawn(function()
                 LeaderboardService:NotifyUpdate(survivorPlr, "RoundSurvives")
