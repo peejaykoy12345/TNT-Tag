@@ -18,6 +18,7 @@ local LeaderboardService = require(Services.LeaderboardService)
 local InventoryService = require(Services.InventoryService)
 
 local Coins = require(script.Coins)
+local Stats = require(script.Stats)
 
 local Modules = ReplicatedStorage.Modules
 local Utilities = Modules.Utilities
@@ -75,14 +76,8 @@ function RoundService:_ApplyTaggerEffects(tagger: Model)
         return
     end
 
-    local equippedAura = InventoryService:GetEquippedItem(plr, "Auras")
-    local equippedBomb = InventoryService:GetEquippedItem(plr, "Bombs")
-    if not equippedAura then
-        equippedAura = "Default"
-    end
-    if not equippedBomb then
-        equippedBomb = "Default"
-    end
+    local equippedAura = InventoryService:GetEquippedItem(plr, "Auras") or "Default"
+    local equippedBomb = InventoryService:GetEquippedItem(plr, "Bombs") or "Default"
 
     self.currentTaggerVFXHandleId = ClientFX:Construct(
         {
@@ -131,14 +126,12 @@ end
 function RoundService:_ApplyTaggerStats(tagger: Model)
     local hum = tagger:FindFirstChildOfClass("Humanoid")
     if not hum then return end
-
     hum.WalkSpeed = CONFIG.TAGGER_WALKSPEED
 end
 
 function RoundService:_RemoveTaggerStats(tagger: Model)
     local hum = tagger:FindFirstChildOfClass("Humanoid")
     if not hum then return end
-
     hum.WalkSpeed = CONFIG.RUNNER_WALKSPEED
 end
 
@@ -170,7 +163,7 @@ function RoundService:_CleanupRound()
         self.currentConnection = nil
     end
 
-    for char, conn in self.diedConnections do
+    for _, conn in self.diedConnections do
         conn:Disconnect()
     end
     self.diedConnections = {}
@@ -188,6 +181,15 @@ function RoundService:_CleanupRound()
 
         char.Parent = workspace
         char:PivotTo(MapMarkers.Spawn.CFrame)
+
+        local plr = Players:GetPlayerFromCharacter(char)
+        if plr then
+            Stats:PrintStats(plr)
+        end
+    end
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        Stats:UnregisterPlayer(plr)
     end
 
     self.tagger = nil
@@ -204,7 +206,6 @@ function RoundService:_CheckRoundEnd()
         self:_StartIntermission()
         return true
     end
-
     return false
 end
 
@@ -280,6 +281,7 @@ function RoundService:_InitializeTagging(tagger: Model)
                     NotificationPacket.sendTo({Message = "You tagged " .. runner.Name}, taggerPlr)
                     Profiles:IncrementData(taggerPlr, "Tags", 1)
                     LeaderboardService:NotifyUpdate(taggerPlr, "Tags")
+                    Stats:Add(taggerPlr, "Tags", 1)
                 end)
             end
 
@@ -318,7 +320,8 @@ function RoundService:_ExplodeBomb()
     local hitSomething = false
     local stopped = false
 
-    hb.HitSomeone:Connect(function(hitChars)
+    local hitConn
+    hitConn = hb.HitSomeone:Connect(function(hitChars)
         for _, hitChar in ipairs(hitChars) do
             if stopped then return end
             if not AbilityUtilities:ValidateHit(runner, hitChar) then continue end
@@ -335,6 +338,11 @@ function RoundService:_ExplodeBomb()
 
             hitChar.Parent = workspace
 
+            local hitPlr = Players:GetPlayerFromCharacter(hitChar)
+            if hitPlr then
+                Stats:CompileOnDeath(hitPlr)
+            end
+
             AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
             VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
@@ -343,16 +351,20 @@ function RoundService:_ExplodeBomb()
             end)
 
             NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
+            Stats:Add(plr, "Kills", 1)
         end
     end)
 
     task.delay(0.2, function()
         stopped = true
+        hitConn:Disconnect()
         hb:Destroy()
 
         if not GameStarted.Value then return end
 
         if not hitSomething then
+            Stats:CompileOnDeath(plr)
+
             AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
             VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
@@ -364,19 +376,22 @@ function RoundService:_ExplodeBomb()
                 local lastBombHolderPlr = Players:GetPlayerFromCharacter(self.lastBombHolder)
                 if lastBombHolderPlr then
                     NotificationPacket.sendTo({Message = "You killed " .. runner.Name}, lastBombHolderPlr)
+                    Stats:Add(lastBombHolderPlr, "Kills", 1)
                 end
             end
         end
 
-        task.spawn(function()
-            for _, survivorChar in ipairs(workspace.Runners:GetChildren()) do
-                if survivorChar == runner then continue end
-                local survivorPlr = Players:GetPlayerFromCharacter(survivorChar)
-                if not survivorPlr then continue end
-                Profiles:IncrementData(survivorPlr, "RoundSurvives", 1)
+        for _, survivorChar in ipairs(workspace.Runners:GetChildren()) do
+            if survivorChar == runner then continue end
+            local survivorPlr = Players:GetPlayerFromCharacter(survivorChar)
+            if not survivorPlr then continue end
+            Profiles:IncrementData(survivorPlr, "RoundSurvives", 1)
+            Stats:Add(survivorPlr, "RoundSurvives", 1)
+
+            task.spawn(function()
                 LeaderboardService:NotifyUpdate(survivorPlr, "RoundSurvives")
-            end
-        end)
+            end)
+        end
 
         if not self:_CheckRoundEnd() then
             self:_TrySelectAndStartTagger()
@@ -392,6 +407,11 @@ end
 function RoundService:_OnRunnerDied(char: Model)
     if not GameStarted.Value then return end
     if char:GetAttribute("Exploding") then return end
+
+    local plr = Players:GetPlayerFromCharacter(char)
+    if plr then 
+        Stats:CompileOnDeath(plr)
+    end
 
     self:_RemoveTaggerEffects(char)
     char:SetAttribute("Tagger", nil)
@@ -438,6 +458,8 @@ function RoundService:_StartRound()
         local char = plr.Character
         if not char then continue end
 
+        Stats:RegisterPlayer(plr)
+
         char:PivotTo(CFrame.new(MapMarkers.RoundStart.Position))
         char.Parent = workspace.Runners
 
@@ -483,6 +505,8 @@ function RoundService:_OnPlayerRemoving(plr: Player)
     local char = plr.Character
     if not char then return end
 
+    Stats:UnregisterPlayer(plr)
+
     if not GameStarted.Value then return end
 
     if char.Parent == workspace.Runners then
@@ -502,6 +526,11 @@ function RoundService:_OnPlayerRemoving(plr: Player)
                 self:_TrySelectAndStartTagger()
             end
         else
+            if self.diedConnections[char] then
+                self.diedConnections[char]:Disconnect()
+                self.diedConnections[char] = nil
+            end
+
             char.Parent = workspace
             self:_SendRunnersLeft()
             self:_CheckRoundEnd()

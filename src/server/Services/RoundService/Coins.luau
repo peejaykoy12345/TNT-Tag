@@ -9,6 +9,7 @@ local CoinPart = ReplicatedStorage.Assets.General.Models.Coin
 
 local Services = ServerScriptService.Services
 local Profiles = require(Services.Profiles)
+local Stats = require(script.Parent.Stats)
 
 local CONFIG = {
     COIN_SPAWN_INTERVAL = 1,
@@ -22,16 +23,22 @@ local spawnLoopStopped = false
 local coinCounts: {[Part]: number} = {}
 
 function Coins:_InitializeCoin(coin: Part, spawnPart: Part)
+    local collected = false
+
     coin.Touched:Connect(function(partWhoTouched)
+        if collected then return end
+
         local char = partWhoTouched.Parent
         if not char:IsA("Model") then return end
 
         local plr = Players:GetPlayerFromCharacter(char)
         if not plr then return end
 
+        collected = true
         coinCounts[spawnPart] = math.max(0, (coinCounts[spawnPart] or 0) - 1)
         coin:Destroy()
         Profiles:IncrementData(plr, "Coins", 1)
+        Stats:Add(plr, "Coins", 1)
     end)
 end
 
@@ -74,8 +81,6 @@ function Coins:_SpawnCoin()
 end
 
 function Coins:Start()
-    print("Coins:Start() called")
-
     spawnLoopStopped = false
     coinCounts = {}
 
@@ -89,7 +94,6 @@ function Coins:Start()
 end
 
 function Coins:Stop()
-    print("Coins:Stop() called")
     spawnLoopStopped = true
 
     if spawnLoop then
