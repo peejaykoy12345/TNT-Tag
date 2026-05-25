@@ -17,6 +17,8 @@ local Profiles = require(Services.Profiles)
 local LeaderboardService = require(Services.LeaderboardService)
 local InventoryService = require(Services.InventoryService)
 
+local Coins = require(script.Coins)
+
 local Modules = ReplicatedStorage.Modules
 local Utilities = Modules.Utilities
 local GeneralUtilities = Utilities.General
@@ -185,6 +187,8 @@ function RoundService:_CleanupRound()
     self.tagger = nil
     self.lastBombHolder = nil
     GameStarted.Value = false
+
+    Coins:Stop()
 end
 
 function RoundService:_CheckRoundEnd()
@@ -422,6 +426,8 @@ function RoundService:_StartRound()
     for _, char in ipairs(workspace.Runners:GetChildren()) do
         char.Parent = workspace
     end
+
+    Coins:Start()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         local char = plr.Character

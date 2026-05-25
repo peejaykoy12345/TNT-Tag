@@ -33,8 +33,6 @@ function RewardsService:Init()
         profile.Data.Flags.ClaimedFreeGroupReward = true
 
         NotificationPacket.sendTo({Message = "Successfully claimed reward"}, plr)
-        
-        Network.Replication.packets.Update.sendTo({Name = "Coins", Value = {uint32 = profile.Data.Coins}}, plr)
     end)
 end
 

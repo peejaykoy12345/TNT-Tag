@@ -1,8 +1,12 @@
-local Players = game:GetService("Players")
 local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local ServerPackages = ServerScriptService.ServerPackages
 local ProfileStore = require(ServerPackages.ProfileStore)
+
+local Network = require(ReplicatedStorage.Modules.Network)
+local UpdatePacket = Network.Replication.packets.Update
 
 export type ProfileData = {
 	Coins: number,
@@ -46,7 +50,15 @@ local PROFILE_TEMPLATE: ProfileData = {
     },
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_V6", PROFILE_TEMPLATE)
+local CONFIG = {
+	DATA_TO_REPLICATE = {
+		Coins = {
+			DATA_TYPE = "uint32"
+		}
+	}
+}
+
+local PlayerStore = ProfileStore.New("PlayerData_V7", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
@@ -127,6 +139,13 @@ function module:IncrementData(plr: Player, dataName: string, value: number)
 	if not profile then return end
 
 	profile.Data[dataName] += value
+
+	if CONFIG.DATA_TO_REPLICATE[dataName] then
+		local Value = {}
+		
+		Value[CONFIG.DATA_TO_REPLICATE[dataName].DATA_TYPE] = profile.Data[dataName]
+		UpdatePacket.sendTo({Name = dataName, Value = Value}, plr)
+	end
 end
 
 return module
