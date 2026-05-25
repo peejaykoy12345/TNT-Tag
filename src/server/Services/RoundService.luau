@@ -267,6 +267,8 @@ function RoundService:_InitializeTagging(tagger: Model)
             local taggerPlr = Players:GetPlayerFromCharacter(tagger)
             if taggerPlr then
                 task.spawn(function()
+                    NotificationPacket.sendTo({Message = "You tagged " .. runner.Name}, taggerPlr)
+
                     Profiles:IncrementData(taggerPlr, "Tags", 1)
                     LeaderboardService:NotifyUpdate(taggerPlr, "Tags")
                 end)
