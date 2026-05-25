@@ -20,6 +20,10 @@ local CONFIG = {
 			OrderedDataStoreName = "Leaderboard_Tags_V1",
 			DisplayName = "Tags",
 		},
+        RoundSurvives = {
+			OrderedDataStoreName = "Leaderboard_Round_Survives_V1",
+			DisplayName = "Round Survives",
+		},
 	},
 }
 
@@ -201,14 +205,26 @@ function LeaderboardService:FetchPlayerRank(plr: Player, statName: string)
 	return nil
 end
 
-function LeaderboardService:NotifyUpdate(plr: Player)
+function LeaderboardService:NotifyUpdate(plr: Player, statName: string)
 	if not plr then
 		warn("[LeaderboardService] NotifyUpdate: no player provided")
 		return
 	end
 
-	self:_SubmitAllStats(plr)
-	self:_BroadcastUpdate(plr)
+	local value = Profiles:GetData(plr, statName)
+	if type(value) ~= "number" then return end
+
+	self:_SubmitScore(plr, statName, value)
+
+	local payload = { userId = plr.UserId, stats = { [statName] = value } }
+
+	local success, err = pcall(function()
+		MessagingService:PublishAsync(CONFIG.MS_TOPIC, payload)
+	end)
+
+	if not success then
+		warn(`[LeaderboardService] Failed to broadcast update for {plr.Name}: {err}`)
+	end
 end
 
 function LeaderboardService:Init()

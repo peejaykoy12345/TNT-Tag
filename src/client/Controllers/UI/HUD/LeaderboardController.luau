@@ -13,6 +13,7 @@ local plr = Players.LocalPlayer
 local CONFIG = {
 	STATS = {
 		"Tags",
+        "RoundSurvives",
 	},
 }
 
@@ -191,7 +192,20 @@ function LeaderboardController:Start()
 			end
 
 			local p = data.playerEntry
-			self:_UpdateLeaderboard(p.statName, p)
+			if p.rank == 0 then
+				local leaderboard = Leaderboards:FindFirstChild(p.statName)
+				if leaderboard then
+					local guiPart = leaderboard:FindFirstChild("LeaderboardGuiPart")
+					local gui = guiPart and guiPart:FindFirstChild("LeaderboardGui")
+					local contentFrame = gui and gui:FindFirstChild("ContentFrame")
+					local playerRankLabel = contentFrame and contentFrame:FindFirstChild("PlayerRank")
+					if playerRankLabel then
+						playerRankLabel.Text = "Your rank: 100+"
+					end
+				end
+			else
+				self:_UpdateLeaderboard(p.statName, p)
+			end
 		end
 	end)
 end

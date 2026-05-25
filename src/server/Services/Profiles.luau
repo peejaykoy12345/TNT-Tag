@@ -7,6 +7,7 @@ local ProfileStore = require(ServerPackages.ProfileStore)
 export type ProfileData = {
 	Gold: number,
 	Tags: number,
+	RoundSurvives: number,
 	Inventory: {
         Equipped: {
             Abilities: string,
@@ -24,6 +25,7 @@ export type ProfileData = {
 local PROFILE_TEMPLATE: ProfileData = {
 	Gold = 100,
 	Tags = 0,
+	RoundSurvives = 0,
 	Inventory = {
         Equipped = {
             Abilities = "Default",

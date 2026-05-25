@@ -266,8 +266,10 @@ function RoundService:_InitializeTagging(tagger: Model)
 
             local taggerPlr = Players:GetPlayerFromCharacter(tagger)
             if taggerPlr then
-                Profiles:IncrementData(taggerPlr, "Tags", 1)
-                LeaderboardService:NotifyUpdate(taggerPlr)
+                task.spawn(function()
+                    Profiles:IncrementData(taggerPlr, "Tags", 1)
+                    LeaderboardService:NotifyUpdate(taggerPlr, "Tags")
+                end)
             end
 
             self:_InitializeTagging(runner)
@@ -354,6 +356,16 @@ function RoundService:_ExplodeBomb()
                 end
             end
         end
+
+        task.spawn(function()
+            for _, survivorChar in ipairs(workspace.Runners:GetChildren()) do
+                if survivorChar == runner then continue end
+                local survivorPlr = Players:GetPlayerFromCharacter(survivorChar)
+                if not survivorPlr then continue end
+                Profiles:IncrementData(survivorPlr, "RoundSurvives", 1)
+                LeaderboardService:NotifyUpdate(survivorPlr, "RoundSurvives")
+            end
+        end)
 
         if not self:_CheckRoundEnd() then
             self:_TrySelectAndStartTagger()
