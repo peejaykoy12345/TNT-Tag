@@ -458,23 +458,24 @@ function RoundService:_StartRound()
 end
 
 function RoundService:_StartIntermission()
-    for i = CONFIG.INTERMISSION_TIME, 0, -1 do
-        if GameStarted.Value then return end
+    while true do
+        for i = CONFIG.INTERMISSION_TIME, 0, -1 do
+            if GameStarted.Value then return end
 
-        UnreliableUpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
+            UnreliableUpdatePacket.sendToAll({Name = "Timer", Value = {uint16 = i}})
 
-        if i == 0 then
-            if #Players:GetPlayers() < 2 then
-                self:_StartIntermission()
+            if i == 0 then
+                if #Players:GetPlayers() < 2 then
+                    break
+                end
+
+                GameStarted.Value = true
+                self:_StartRound()
                 return
             end
 
-            GameStarted.Value = true
-            self:_StartRound()
-            return
+            task.wait(1)
         end
-
-        task.wait(1)
     end
 end
 
