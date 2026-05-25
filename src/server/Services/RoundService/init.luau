@@ -17,6 +17,7 @@ local Profiles = require(Services.Profiles)
 local LeaderboardService = require(Services.LeaderboardService)
 local InventoryService = require(Services.InventoryService)
 
+local SurviveLeaderboard = require(script.SurviveLeaderboard)
 local Coins = require(script.Coins)
 local Stats = require(script.Stats)
 
@@ -167,6 +168,8 @@ function RoundService:_CleanupRound()
         conn:Disconnect()
     end
     self.diedConnections = {}
+
+    SurviveLeaderboard:EndRound()
 
     local runners = workspace.Runners:GetChildren()
 
@@ -351,10 +354,12 @@ function RoundService:_ExplodeBomb()
                 hitChar:PivotTo(MapMarkers.Spawn.CFrame)
             end)
 
+            SurviveLeaderboard:RecordDeath(hitChar)
             self:_OnRunnerDied(hitChar, true)
 
             NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
             Stats:Add(plr, "Kills", 1)
+            
         end
     end)
 
@@ -364,6 +369,7 @@ function RoundService:_ExplodeBomb()
         hb:Destroy()
 
         if not hitSomething then
+            SurviveLeaderboard:RecordDeath(runner)
             self:_OnRunnerDied(runner, true)
 
             AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
@@ -425,6 +431,7 @@ function RoundService:_OnRunnerDied(char: Model, skipRoundEndCheck: boolean)
     self:_SendRunnersLeft()
     
     if not skipRoundEndCheck then
+        SurviveLeaderboard:RecordDeath(char)
         self:_CheckRoundEnd()
     end
 end
@@ -456,6 +463,7 @@ function RoundService:_StartRound()
     end
 
     Coins:Start()
+    SurviveLeaderboard:StartRound()
 
     for _, plr in ipairs(Players:GetPlayers()) do
         local char = plr.Character
