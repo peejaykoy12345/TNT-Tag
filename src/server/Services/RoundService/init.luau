@@ -180,11 +180,14 @@ function RoundService:_CleanupRound()
         end
 
         char.Parent = workspace
-        char:PivotTo(MapMarkers.Spawn.CFrame)
+
+        if not char:GetAttribute("Ragdolled") then
+            char:PivotTo(MapMarkers.Spawn.CFrame)
+        end
 
         local plr = Players:GetPlayerFromCharacter(char)
         if plr then
-            Stats:PrintStats(plr)
+            Stats:CompileOnDeath(plr)
         end
     end
 
@@ -329,26 +332,26 @@ function RoundService:_ExplodeBomb()
             if not hitSomething then
                 AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
                 VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
+
+                runner:SetAttribute("Ragdolled")
                 task.delay(CONFIG.RAGDOLL_DURATION, function()
+                    runner:SetAttribute("Ragdolled", nil)
                     runner:PivotTo(MapMarkers.Spawn.CFrame)
                 end)
             end
 
             hitSomething = true
 
-            hitChar.Parent = workspace
-
-            local hitPlr = Players:GetPlayerFromCharacter(hitChar)
-            if hitPlr then
-                Stats:CompileOnDeath(hitPlr)
-            end
-
             AbilityUtilities:RagdollCharacter(hitChar, CONFIG.RAGDOLL_DURATION, true)
             VelocityUtilities.ApplyKnockback(origin, hitChar, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
+            hitChar:SetAttribute("Ragdolled")
             task.delay(CONFIG.RAGDOLL_DURATION, function()
+                hitChar:SetAttribute("Ragdolled", nil)
                 hitChar:PivotTo(MapMarkers.Spawn.CFrame)
             end)
+
+            self:_OnRunnerDied(hitChar, true)
 
             NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
             Stats:Add(plr, "Kills", 1)
@@ -360,15 +363,15 @@ function RoundService:_ExplodeBomb()
         hitConn:Disconnect()
         hb:Destroy()
 
-        if not GameStarted.Value then return end
-
         if not hitSomething then
-            Stats:CompileOnDeath(plr)
+            self:_OnRunnerDied(runner, true)
 
             AbilityUtilities:RagdollCharacter(runner, CONFIG.RAGDOLL_DURATION, true)
             VelocityUtilities.ApplyKnockback(origin, runner, CONFIG.KNOCKBACK.POWER, CONFIG.KNOCKBACK.DURATION)
 
+            runner:SetAttribute("Ragdolled")
             task.delay(CONFIG.RAGDOLL_DURATION, function()
+                runner:SetAttribute("Ragdolled", nil)
                 runner:PivotTo(MapMarkers.Spawn.CFrame)
             end)
 
@@ -382,7 +385,6 @@ function RoundService:_ExplodeBomb()
         end
 
         for _, survivorChar in ipairs(workspace.Runners:GetChildren()) do
-            if survivorChar == runner then continue end
             local survivorPlr = Players:GetPlayerFromCharacter(survivorChar)
             if not survivorPlr then continue end
             Profiles:IncrementData(survivorPlr, "RoundSurvives", 1)
@@ -400,12 +402,10 @@ function RoundService:_ExplodeBomb()
 
     self:_RemoveTaggerEffects(runner)
     runner:SetAttribute("Tagger", nil)
-    runner.Parent = workspace
     self.tagger = nil
 end
 
-function RoundService:_OnRunnerDied(char: Model)
-    if not GameStarted.Value then return end
+function RoundService:_OnRunnerDied(char: Model, skipRoundEndCheck: boolean)
     if char:GetAttribute("Exploding") then return end
 
     local plr = Players:GetPlayerFromCharacter(char)
@@ -423,7 +423,10 @@ function RoundService:_OnRunnerDied(char: Model)
     end
 
     self:_SendRunnersLeft()
-    self:_CheckRoundEnd()
+    
+    if not skipRoundEndCheck then
+        self:_CheckRoundEnd()
+    end
 end
 
 function RoundService:_StartRoundTimer()

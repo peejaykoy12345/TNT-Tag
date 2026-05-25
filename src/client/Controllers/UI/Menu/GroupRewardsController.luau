@@ -22,7 +22,7 @@ local GroupRewardsController = {}
 function GroupRewardsController:Init()
     local permitted = false
 
-    local ClaimHitbox = workspace.RewardsArea.ClaimHitbox :: Part
+    local ClaimHitbox = workspace:WaitForChild("RewardsArea"):WaitForChild("ClaimHitbox") :: Part
     ClaimHitbox.Touched:Connect(function(part)
         if part.Parent ~= plr.Character then return end
         GroupRewardsMenu.Visible = true
