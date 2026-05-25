@@ -189,4 +189,14 @@ return {
 			queries = {},
 		}
 	end),
+	Misc = ByteNetMax.defineNamespace("Misc", function()
+		return {
+			packets = {
+				ClaimFreeGroupReward = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({})
+				}),
+			},
+			queries = {},
+		}
+	end),
 }

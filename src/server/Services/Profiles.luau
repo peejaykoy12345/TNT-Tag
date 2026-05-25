@@ -8,6 +8,9 @@ export type ProfileData = {
 	Gold: number,
 	Tags: number,
 	RoundSurvives: number,
+	Flags: {
+		ClaimedFreeGroupReward: boolean,
+	},
 	Inventory: {
         Equipped: {
             Abilities: string,
@@ -26,6 +29,9 @@ local PROFILE_TEMPLATE: ProfileData = {
 	Gold = 100,
 	Tags = 0,
 	RoundSurvives = 0,
+	Flags = {
+		ClaimedFreeGroupReward = false,
+	},
 	Inventory = {
         Equipped = {
             Abilities = "Default",
