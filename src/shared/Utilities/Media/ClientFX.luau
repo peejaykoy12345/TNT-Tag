@@ -16,7 +16,7 @@ export type argsType = {
     vfx: Attachment? | BasePart?,
     vfxCFrame: CFrame?,
     position: Vector3,
-    rocks: boolean?,
+    shouldWeld: boolean?,
     isBeam: boolean?,
     offset: CFrame?,
     weld: boolean?,

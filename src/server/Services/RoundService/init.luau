@@ -8,6 +8,7 @@ local MapMarkers = workspace.MapMarkers
 local Assets = ReplicatedStorage.Assets
 local Bombs = Assets.Bombs
 local Auras = Assets.Auras
+local Explosions = Assets.Explosions
 
 local Values = ReplicatedStorage.Values
 local GameStarted: BoolValue = Values.GameStarted
@@ -315,6 +316,22 @@ function RoundService:_ExplodeBomb()
     local hrp = runner:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    local equippedExplosion = InventoryService:GetEquippedItem(plr, "Explosions") or "Default"
+
+   ClientFX:RenderToClient(
+        {
+            Name = "EmitParticles",
+            Type = "General",
+        },
+        {
+            vfx = Explosions[equippedExplosion],
+            vfxCFrame = hrp.CFrame,
+            shouldWeld = false,
+            parent = hrp,
+            position = hrp.Position,
+        }
+    )
+
     local origin = hrp.CFrame
 
     local hb = AbilityUtilities:CreateHitbox({
@@ -359,7 +376,6 @@ function RoundService:_ExplodeBomb()
 
             NotificationPacket.sendTo({Message = "You killed " .. hitChar.Name}, plr)
             Stats:Add(plr, "Kills", 1)
-            
         end
     end)
 

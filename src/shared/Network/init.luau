@@ -160,28 +160,27 @@ return {
 							Type = ByteNetMax.string,
 						})),
 						args = ByteNetMax.struct({
-							parent = ByteNetMax.optional(ByteNetMax.inst),
-							weldPart = ByteNetMax.optional(ByteNetMax.inst),
-							vfx = ByteNetMax.optional(ByteNetMax.inst),
-							vfxName = ByteNetMax.optional(ByteNetMax.string),
-							vfxCFrame = ByteNetMax.optional(ByteNetMax.cframe),
-							deletionTime = ByteNetMax.optional(ByteNetMax.uint8),
-							offset = ByteNetMax.optional(ByteNetMax.cframe),
-							shake = ByteNetMax.optional(ByteNetMax.string),
-							rocks = ByteNetMax.optional(ByteNetMax.bool),
-							weld = ByteNetMax.optional(ByteNetMax.bool),
-							position = ByteNetMax.optional(ByteNetMax.vec3),
-							isBeam = ByteNetMax.optional(ByteNetMax.bool),
-							caster = ByteNetMax.optional(ByteNetMax.inst),
-							target = ByteNetMax.optional(ByteNetMax.inst),
-							timeBetweenAfterimage = ByteNetMax.optional(ByteNetMax.float32),
-							afterimageDuration = ByteNetMax.optional(ByteNetMax.float32),
-							tween = ByteNetMax.optional(ByteNetMax.struct({
-								target = ByteNetMax.struct({
-									CFrame = ByteNetMax.optional(ByteNetMax.cframe),
-								}),
-								duration = ByteNetMax.uint16,
-							}))
+							parent = ByteNetMax.optional(ByteNetMax.inst), -- Who to set to
+                            weldPart = ByteNetMax.optional(ByteNetMax.inst),
+                            vfx = ByteNetMax.optional(ByteNetMax.inst), -- Use for instances (particles, etc)
+                            vfxName = ByteNetMax.optional(ByteNetMax.string), -- Use for highlight
+                            vfxCFrame = ByteNetMax.optional(ByteNetMax.cframe),
+                            deletionTime = ByteNetMax.optional(ByteNetMax.uint8), 
+                            offset = ByteNetMax.optional(ByteNetMax.cframe),
+                            position = ByteNetMax.optional(ByteNetMax.vec3),
+                            isBeam = ByteNetMax.optional(ByteNetMax.bool),
+                            shouldWeld = ByteNetMax.optional(ByteNetMax.bool),
+                            weldC1 = ByteNetMax.optional(ByteNetMax.cframe),
+                            caster = ByteNetMax.optional(ByteNetMax.inst),
+                            target = ByteNetMax.optional(ByteNetMax.inst),
+                            timeBetweenAfterimage = ByteNetMax.optional(ByteNetMax.float32),
+                            afterimageDuration = ByteNetMax.optional(ByteNetMax.float32),
+                            tween = ByteNetMax.optional(ByteNetMax.struct({
+                                target = ByteNetMax.struct({
+                                    CFrame = ByteNetMax.optional(ByteNetMax.cframe),
+                                }),
+                                duration = ByteNetMax.uint16,
+                            }))
 						})
 					}),
 				}),

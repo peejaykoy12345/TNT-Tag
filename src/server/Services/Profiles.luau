@@ -41,11 +41,13 @@ local PROFILE_TEMPLATE: ProfileData = {
             Abilities = "Default",
             Bombs = "Default",
             Auras = "Default",
+			Explosions = "Default",
         },
         Owned = {
             Abilities = {"Default"},
             Bombs = {"Default"},
-            Auras = {"Default", "Green Fire"}
+            Auras = {"Default", "Green Fire"},
+			Explosions = {"Default"},
         }
     },
 }
