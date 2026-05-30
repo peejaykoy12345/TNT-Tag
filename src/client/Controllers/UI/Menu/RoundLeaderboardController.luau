@@ -6,7 +6,7 @@ local SurviveLeaderboardPacket = Network.Misc.packets.SurviveLeaderboard
 
 local plr = Players.LocalPlayer
 local MenuGui = plr:WaitForChild("PlayerGui"):WaitForChild("MenuGui"):WaitForChild("MiddleContainer")
-local SurviveLeaderboardMenu = MenuGui:WaitForChild("SurviveLeaderboardMenu") :: Frame
+local SurviveLeaderboardMenu = MenuGui:WaitForChild("RoundLeaderboardMenu") :: Frame
 local Content = SurviveLeaderboardMenu:WaitForChild("Content") :: Frame
 local CloseButton = SurviveLeaderboardMenu:WaitForChild("HeaderFrame"):WaitForChild("CloseButton") :: ImageButton
 
