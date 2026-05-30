@@ -26,6 +26,29 @@ function SurviveLeaderboardController:_Clear()
     end
 end
 
+function SurviveLeaderboardController:_SetProfilePicture(frame, playerName: string)
+    task.spawn(function()
+        local userId
+
+        local player = Players:FindFirstChild(playerName)
+        if player then
+            userId = player.UserId
+        else
+            local ok, id = pcall(Players.GetUserIdFromNameAsync, Players, playerName)
+            if not ok or not id then return end
+            userId = id
+        end
+
+        local ok, imageUrl = pcall(Players.GetUserThumbnailAsync, Players, userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+        if not ok or not imageUrl then return end
+
+        local profilePicture = frame:FindFirstChild("ProfilePicture")
+        if not profilePicture then return end
+
+        profilePicture.Image = imageUrl
+    end)
+end
+
 function SurviveLeaderboardController:Init()
     CloseButton.Activated:Connect(function()
         SurviveLeaderboardMenu.Visible = false
@@ -43,6 +66,8 @@ function SurviveLeaderboardController:Init()
             frame.Name = tostring(rank)
             frame.Parent = Content
             frame.Visible = true
+
+            self:_SetProfilePicture(frame, entry.name)
         end
     end)
 end
